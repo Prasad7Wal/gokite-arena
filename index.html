@@ -2,82 +2,147 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Wallet Connect (All Browser Support)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GoKite Arena ⚔️</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; margin-top: 80px; }
-    button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
-    #status { margin-top: 20px; font-weight: bold; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #090979, #00d4ff);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+      margin: 0;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+    p#statusText {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 10px 20px;
+      border-radius: 8px;
+      margin: 10px 0 20px;
+      display: inline-block;
+    }
+    button {
+      padding: 12px 25px;
+      border: none;
+      border-radius: 10px;
+      background-color: #00c3ff;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 5px;
+      transition: all 0.3s ease;
+    }
+    button:hover {
+      background-color: #0077ff;
+      transform: scale(1.05);
+    }
+    button:disabled {
+      background-color: #444;
+      cursor: not-allowed;
+    }
+    footer {
+      position: absolute;
+      bottom: 20px;
+      font-size: 14px;
+      opacity: 0.8;
+    }
   </style>
 </head>
 <body>
-  <h1>🪙 Universal Wallet Connect</h1>
-  <button id="connectWallet">Connect Wallet</button>
-  <p id="status">Status: Not connected</p>
+  <h1>🏆 GoKite Arena</h1>
+  <p id="statusText">🔴 Wallet not connected</p>
 
-  <!-- ✅ Load ethers.js (CDN 1: Cloudflare) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
+  <div>
+    <button id="connectWalletBtn">🔗 Connect Wallet</button>
+    <button id="joinArenaBtn" disabled>⚔️ Join Arena</button>
+  </div>
 
-  <!-- ✅ CDN 2 Fallback (jsDelivr) -->
+  <footer>Built on GoKite AI ⚙️</footer>
+
+  <!-- ✅ Ethers.js v6 CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.6.0/ethers.umd.min.js"></script>
+
+  <!-- ✅ Main Script -->
   <script>
-    window.addEventListener('error', function (e) {
-      if (e.target.tagName === 'SCRIPT' && e.target.src.includes('ethers')) {
-        console.warn('⚠️ Cloudflare failed — trying jsDelivr fallback...');
-        const script = document.createElement('script');
-        script.src = "https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js";
-        document.head.appendChild(script);
-      }
-    });
-  </script>
+  (async () => {
+    const connectBtn = document.getElementById("connectWalletBtn");
+    const joinBtn = document.getElementById("joinArenaBtn");
+    const statusText = document.getElementById("statusText");
 
-  <!-- ✅ Verification before running wallet code -->
-  <script>
-    async function loadEthers() {
-      for (let i = 0; i < 20; i++) {
-        if (window.ethers) return true;
-        await new Promise(r => setTimeout(r, 300));
-      }
-      return false;
+    const contractAddress = "0xf8721539eaa06fb3b4fc62f4c1d20e4db13fd9d1";
+    const abi = [
+      "function joinArena() payable",
+      "function updateScore(uint256 _score, string calldata _discord)",
+      "function topPlayers() view returns (string[] memory, uint256[] memory)"
+    ];
+
+    let provider, signer, contract, account;
+
+    function setStatus(msg) {
+      console.log(msg);
+      statusText.innerText = msg;
     }
 
-    async function startApp() {
-      const ready = await loadEthers();
-      const status = document.getElementById("status");
-      if (!ready) {
-        status.textContent = "❌ Ethers.js still not available. Check your internet or script blocker.";
-        console.error("Ethers.js not loaded after fallback.");
+    // ✅ Connect Wallet
+    async function connectWallet() {
+      try {
+        if (!window.ethereum) {
+          alert("Please install MetaMask or a compatible wallet!");
+          return;
+        }
+
+        provider = new ethers.BrowserProvider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = await provider.getSigner();
+        account = await signer.getAddress();
+
+        contract = new ethers.Contract(contractAddress, abi, signer);
+        setStatus("✅ Wallet connected: " + account.slice(0, 6) + "..." + account.slice(-4));
+
+        connectBtn.disabled = true;
+        joinBtn.disabled = false;
+      } catch (err) {
+        console.error("Connection error:", err);
+        setStatus("❌ Connection failed: " + (err.message || err));
+      }
+    }
+
+    // ✅ Join Arena Transaction
+    async function joinArena() {
+      if (!contract) {
+        alert("Connect your wallet first!");
         return;
       }
 
-      const btn = document.getElementById("connectWallet");
-      btn.addEventListener("click", async () => {
-        try {
-          if (!window.ethereum) {
-            alert("No wallet found! Install MetaMask or compatible wallet.");
-            return;
-          }
-
-          let ethereum = window.ethereum;
-          if (Array.isArray(window.ethereum.providers)) {
-            const mm = window.ethereum.providers.find(p => p.isMetaMask);
-            if (mm) ethereum = mm;
-          }
-
-          const provider = new ethers.BrowserProvider(ethereum);
-          await ethereum.request({ method: "eth_requestAccounts" });
-          const signer = await provider.getSigner();
-          const address = await signer.getAddress();
-          const network = await provider.getNetwork();
-
-          console.log("Connected:", address, "on", network.name);
-          status.textContent = `✅ Connected: ${address.slice(0,6)}...${address.slice(-4)} (${network.name})`;
-        } catch (err) {
-          console.error("Wallet connect error:", err);
-          status.textContent = "❌ " + (err.message || "Connection failed");
-        }
-      });
+      try {
+        setStatus("⏳ Sending transaction...");
+        const tx = await contract.joinArena({
+          value: ethers.parseEther("0.01") // 0.01 ETH deposit
+        });
+        await tx.wait();
+        setStatus("🎉 Joined Arena successfully!");
+      } catch (err) {
+        console.error("Join failed:", err);
+        setStatus("❌ Transaction failed: " + (err.message || err));
+      }
     }
 
-    startApp();
+    connectBtn.addEventListener("click", connectWallet);
+    joinBtn.addEventListener("click", joinArena);
+
+    // UI Defaults
+    joinBtn.disabled = true;
+    setStatus("🔴 Wallet not connected");
+  })();
   </script>
 </body>
 </html>
