@@ -20,7 +20,8 @@ async function init() {
     provider = new ethers.providers.Web3Provider(window.ethereum);
 
     try {
-        await provider.send("eth_requestAccounts", []); // triggers MetaMask popup
+        // Request account access — this triggers MetaMask popup
+        await provider.send("eth_requestAccounts", []);
     } catch (err) {
         alert("Please connect your MetaMask wallet!");
         return;
@@ -29,15 +30,17 @@ async function init() {
     signer = provider.getSigner();
     contract = new ethers.Contract(contractAddress, abi, signer);
 
-    // Enable buttons now
+    // ✅ Enable buttons now that contract is ready
     document.getElementById("join").disabled = false;
     document.getElementById("update").disabled = false;
 
-    loadLeaderboard(); // Load leaderboard immediately
+    // Load leaderboard immediately
+    loadLeaderboard();
 }
 
-
+// Call init() after window loads
 window.addEventListener('load', init);
+
 
 // ====================== BUTTON EVENTS ======================
 document.getElementById("join").onclick = async () => {
