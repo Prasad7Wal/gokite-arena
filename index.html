@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Universal Wallet Connect</title>
+  <title>Wallet Connect (All Browser Support)</title>
   <style>
     body { font-family: Arial, sans-serif; text-align: center; margin-top: 80px; }
     button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
@@ -10,58 +10,74 @@
   </style>
 </head>
 <body>
-  <h1>🪙 Wallet Connect Test</h1>
+  <h1>🪙 Universal Wallet Connect</h1>
   <button id="connectWallet">Connect Wallet</button>
   <p id="status">Status: Not connected</p>
 
-  <!-- ✅ Load ethers.js from reliable CDN (v6.x) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"
-          integrity="sha512-jmQiBpU2D+eM3Lw45s8hHrR5OTfUNQw4kFklB+fsEX5QwoM3HPuBynLLubnY8coyCUWzcs2yIM02u0DwMeR/zw=="
-          crossorigin="anonymous"
-          referrerpolicy="no-referrer"></script>
+  <!-- ✅ Load ethers.js (CDN 1: Cloudflare) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
 
-  <!-- ✅ Main Script -->
+  <!-- ✅ CDN 2 Fallback (jsDelivr) -->
   <script>
-    const btn = document.getElementById("connectWallet");
-    const statusEl = document.getElementById("status");
-
-    // Check ethers.js
-    if (typeof window.ethers === "undefined") {
-      statusEl.textContent = "❌ Ethers.js not available. Check internet or CDN blocking.";
-      throw new Error("Ethers.js not loaded");
-    }
-
-    async function connectWallet() {
-      try {
-        if (!window.ethereum) {
-          alert("No wallet found! Please install MetaMask or a compatible wallet.");
-          return;
-        }
-
-        // Support for multiple wallets (Brave, Nightly, MetaMask)
-        let ethereum = window.ethereum;
-        if (Array.isArray(window.ethereum.providers)) {
-          const metamask = window.ethereum.providers.find(p => p.isMetaMask);
-          if (metamask) ethereum = metamask;
-        }
-
-        // Create ethers provider
-        const provider = new ethers.BrowserProvider(ethereum);
-        const accounts = await ethereum.request({ method: "eth_requestAccounts" });
-        const address = accounts[0];
-        const network = await provider.getNetwork();
-
-        console.log("Connected account:", address);
-        console.log("Network:", network);
-
-        statusEl.textContent = `✅ Connected: ${address.slice(0,6)}...${address.slice(-4)} on ${network.name}`;
-      } catch (err) {
-        console.error("Wallet connect error:", err);
-        statusEl.textContent = "❌ " + (err.message || "Connection failed");
+    window.addEventListener('error', function (e) {
+      if (e.target.tagName === 'SCRIPT' && e.target.src.includes('ethers')) {
+        console.warn('⚠️ Cloudflare failed — trying jsDelivr fallback...');
+        const script = document.createElement('script');
+        script.src = "https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js";
+        document.head.appendChild(script);
       }
+    });
+  </script>
+
+  <!-- ✅ Verification before running wallet code -->
+  <script>
+    async function loadEthers() {
+      for (let i = 0; i < 20; i++) {
+        if (window.ethers) return true;
+        await new Promise(r => setTimeout(r, 300));
+      }
+      return false;
     }
 
-    btn.addEventListener("click", connectWallet);
+    async function startApp() {
+      const ready = await loadEthers();
+      const status = document.getElementById("status");
+      if (!ready) {
+        status.textContent = "❌ Ethers.js still not available. Check your internet or script blocker.";
+        console.error("Ethers.js not loaded after fallback.");
+        return;
+      }
+
+      const btn = document.getElementById("connectWallet");
+      btn.addEventListener("click", async () => {
+        try {
+          if (!window.ethereum) {
+            alert("No wallet found! Install MetaMask or compatible wallet.");
+            return;
+          }
+
+          let ethereum = window.ethereum;
+          if (Array.isArray(window.ethereum.providers)) {
+            const mm = window.ethereum.providers.find(p => p.isMetaMask);
+            if (mm) ethereum = mm;
+          }
+
+          const provider = new ethers.BrowserProvider(ethereum);
+          await ethereum.request({ method: "eth_requestAccounts" });
+          const signer = await provider.getSigner();
+          const address = await signer.getAddress();
+          const network = await provider.getNetwork();
+
+          console.log("Connected:", address, "on", network.name);
+          status.textContent = `✅ Connected: ${address.slice(0,6)}...${address.slice(-4)} (${network.name})`;
+        } catch (err) {
+          console.error("Wallet connect error:", err);
+          status.textContent = "❌ " + (err.message || "Connection failed");
+        }
+      });
+    }
+
+    startApp();
   </script>
 </body>
 </html>
