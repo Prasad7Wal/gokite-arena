@@ -1,6 +1,5 @@
 (async () => {
-
-  // --- CONTRACT CONFIG ---
+  // --- CONFIG ---
   const contractAddress = "0xf8721539eaa06fb3b4fc62f4c1d20e4db13fd9d1"; 
   const abi = [
     "function joinArena() payable",
@@ -26,7 +25,7 @@
   let currentQuestion = 0;
 
   const quizQuestions = [
-    { q: "What is GoKite AI?", a: ["Blockchain platform", "App", "Video codec", "Database"], correct: 0 },
+    { q: "What is GoKite AI?", a: ["Blockchain platform","App","Video codec","Database"], correct: 0 },
     { q: "Token symbol used?", a: ["KITE","ETH","BTC","SOL"], correct: 0 },
     { q: "Wallet required?", a: ["Yes","No","Optional","Later"], correct: 0 },
     { q: "Quiz questions per round?", a: ["10","5","20","15"], correct: 0 },
@@ -38,10 +37,10 @@
     { q: "Hosting free on GitHub Pages?", a: ["Yes","No","Only paid","Server needed"], correct: 0 }
   ];
 
-  function setStatus(msg) { statusText.innerText = msg; }
+  function setStatus(msg) { if(statusText) statusText.innerText = msg; }
 
-  // --- wait for injected wallet provider ---
-  async function waitForProvider(timeout = 5000) {
+  // --- WAIT FOR WALLET ---
+  async function waitForWallet(timeout = 5000) {
     const interval = 200;
     const maxAttempts = timeout / interval;
     for (let i = 0; i < maxAttempts; i++) {
@@ -51,41 +50,8 @@
     return null;
   }
 
-  async function getProvider() {
-    // Wait for window.ethereum
-    for (let i = 0; i < 50; i++) {
-        if (window.ethereum) break;
-        await new Promise(r => setTimeout(r, 100));
-    }
-    if (!window.ethereum) throw new Error("No wallet found!");
-
-    // Pick MetaMask if multiple providers exist
-    if (Array.isArray(window.ethereum.providers)) {
-        const mm = window.ethereum.providers.find(p => p.isMetaMask);
-        if (mm) return mm;
-        return window.ethereum.providers[0];
-    }
-
-    return window.ethereum;
-}
-
-async function connectWalletFlow() {
-    try {
-        const ethereum = await getProvider();
-        const provider = new ethers.providers.Web3Provider(ethereum, "any");
-        await provider.send("eth_requestAccounts", []);
-        const signer = provider.getSigner();
-        const account = await signer.getAddress();
-        console.log("Wallet connected:", account);
-        return { provider, signer, account };
-    } catch (err) {
-        console.error("connectWalletFlow error:", err);
-        alert(err.message);
-    }
-}
-
-  // --- select proper provider if multiple injected wallets exist ---
-  function pickProvider() {
+  // --- PICK BEST PROVIDER ---
+  function pickInjectedWallet() {
     if (!window.ethereum) return null;
     if (Array.isArray(window.ethereum.providers)) {
       const mm = window.ethereum.providers.find(p => p.isMetaMask);
@@ -99,35 +65,42 @@ async function connectWalletFlow() {
   async function connectWallet() {
     try {
       setStatus("Waiting for wallet...");
-      const injected = await waitForProvider(5000);
+      const injected = await waitForWallet(7000);
       if (!injected) return alert("No wallet found! Install MetaMask or compatible wallet.");
-      const chosen = pickProvider();
-      if (!chosen) return alert("No usable provider detected.");
-      provider = new ethers.providers.Web3Provider(chosen, "any");
+
+      const chosenProvider = pickInjectedWallet();
+      if (!chosenProvider) return alert("No usable provider detected.");
+
+      if (!window.ethers || !ethers.providers || !ethers.providers.Web3Provider) {
+        return alert("Ethers.js not loaded properly!");
+      }
+
+      provider = new ethers.providers.Web3Provider(chosenProvider, "any");
       await provider.send("eth_requestAccounts", []);
       signer = provider.getSigner();
       const account = await signer.getAddress();
       contract = new ethers.Contract(contractAddress, abi, signer);
-      setStatus("Connected: " + account.slice(0,6) + "..." + account.slice(-4));
+
+      setStatus(`Connected: ${account.slice(0,6)}...${account.slice(-4)}`);
       connectBtn.disabled = true;
       joinBtn.disabled = false;
 
-      // Listen for account/chain changes
-      if (chosen.on) {
-        chosen.on("accountsChanged", accounts => {
+      // Listen to account/chain changes
+      if (chosenProvider.on) {
+        chosenProvider.on("accountsChanged", accounts => {
           if (accounts.length === 0) {
             setStatus("Wallet locked");
             connectBtn.disabled = false;
             joinBtn.disabled = true;
           } else {
-            setStatus("Connected: " + accounts[0].slice(0,6) + "..." + accounts[0].slice(-4));
+            setStatus(`Connected: ${accounts[0].slice(0,6)}...${accounts[0].slice(-4)}`);
           }
         });
-        chosen.on("chainChanged", () => window.location.reload());
+        chosenProvider.on("chainChanged", () => window.location.reload());
       }
 
     } catch (err) {
-      console.error(err);
+      console.error("Wallet connection failed:", err);
       alert("Wallet connection failed: " + (err.message || err));
       setStatus("Not connected");
     }
@@ -144,12 +117,12 @@ async function connectWalletFlow() {
       discordDiv.hidden = false;
       joinBtn.disabled = true;
     } catch (e) {
-      console.error(e);
+      console.error("Join arena failed:", e);
       alert("Join arena failed: " + (e.message || e));
     }
   }
 
-  // --- QUIZ FLOW ---
+  // --- QUIZ LOGIC ---
   function startQuiz() {
     const name = discordInput.value.trim();
     if (!name) return alert("Enter Discord name!");
@@ -164,14 +137,13 @@ async function connectWalletFlow() {
   function loadQuestion() {
     if (currentQuestion >= quizQuestions.length) return finishQuiz();
     const q = quizQuestions[currentQuestion];
-    questionText.textContent = q.q;
+    questionText.textContent = `Q${currentQuestion+1}: ${q.q}`;
     answersDiv.innerHTML = "";
     q.a.forEach((ans, idx) => {
       const btn = document.createElement("button");
       btn.textContent = ans;
       btn.onclick = () => {
-        if (idx === q.correct) score += 1;
-        else score -= 1;
+        score += (idx === q.correct ? 1 : -1);
         currentQuestion++;
         loadQuestion();
       };
@@ -188,7 +160,7 @@ async function connectWalletFlow() {
       setStatus("Score submitted!");
       await loadLeaderboard();
     } catch (e) {
-      console.error(e);
+      console.error("Submit score failed:", e);
       alert("Submit score failed: " + (e.message || e));
       setStatus("Score submit failed");
     }
@@ -208,12 +180,12 @@ async function connectWalletFlow() {
       }
       setStatus("Leaderboard loaded");
     } catch(e) {
-      console.error(e);
+      console.error("Leaderboard failed:", e);
       setStatus("Leaderboard failed");
     }
   }
 
-  // --- UI EVENTS ---
+  // --- EVENTS ---
   connectBtn.onclick = connectWallet;
   joinBtn.onclick = joinArena;
   saveDiscordBtn.onclick = startQuiz;
