@@ -46,52 +46,39 @@ window.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
- // Wait for a proper provider
-async function getProvider() {
-    // If user has MetaMask or other injected wallet
-    if (window.ethereum) return window.ethereum;
-
-    // Retry a few times in case wallet injects after page load
-    for (let i = 0; i < 10; i++) {
-        await new Promise(r => setTimeout(r, 200));
-        if (window.ethereum) return window.ethereum;
+    // Wait until window.ethereum is available (Brave/Nightly safe)
+    async function waitForEthereum(timeout = 5000) {
+        const interval = 200;
+        const maxTries = Math.ceil(timeout / interval);
+        let tries = 0;
+        while (!window.ethereum && tries < maxTries) {
+            await new Promise(r => setTimeout(r, interval));
+            tries++;
+        }
+        return window.ethereum || null;
     }
 
-    return null;
-}
+    // Connect wallet
+    connectBtn.onclick = async () => {
+        try {
+            const ethereum = await waitForEthereum();
+            if (!ethereum) return alert("Please install MetaMask or compatible wallet!");
 
-// Wait for wallet to be injected (Brave/Nightly fix)
-async function getEthereum() {
-    if (window.ethereum) return window.ethereum;
-    for (let i = 0; i < 10; i++) {
-        await new Promise(r => setTimeout(r, 200));
-        if (window.ethereum) return window.ethereum;
-    }
-    return null;
-}
+            if (!window.ethers) return alert("Ethers.js not loaded!");
 
-// Connect wallet
-connectBtn.onclick = async () => {
-    try {
-        const ethereum = await getEthereum();
-        if (!ethereum) return alert("Please install MetaMask or compatible wallet!");
+            provider = new ethers.providers.Web3Provider(ethereum, "any"); // "any" allows chain switching
+            await provider.send("eth_requestAccounts", []);
+            signer = provider.getSigner();
+            contract = new ethers.Contract(contractAddress, abi, signer);
 
-        if (!window.ethers) return alert("Ethers.js not loaded!");
-
-        provider = new ethers.providers.Web3Provider(ethereum, "any"); // "any" for chain flexibility
-        await provider.send("eth_requestAccounts", []);
-        signer = provider.getSigner();
-        contract = new ethers.Contract(contractAddress, abi, signer);
-
-        connectBtn.disabled = true;
-        joinBtn.disabled = false;
-        alert("Wallet connected!");
-    } catch (e) {
-        console.error(e);
-        alert("Wallet connection failed: " + e.message);
-    }
-};
-
+            connectBtn.disabled = true;
+            joinBtn.disabled = false;
+            alert("Wallet connected!");
+        } catch (e) {
+            console.error(e);
+            alert("Wallet connection failed: " + e.message);
+        }
+    };
 
     // Join Arena
     joinBtn.onclick = async () => {
@@ -118,12 +105,9 @@ connectBtn.onclick = async () => {
         loadQuestion();
     };
 
-    // Load quiz question
+    // Quiz functions
     function loadQuestion() {
-        if (currentQuestion >= quizQuestions.length) {
-            finishQuiz();
-            return;
-        }
+        if (currentQuestion >= quizQuestions.length) return finishQuiz();
         const q = quizQuestions[currentQuestion];
         questionText.innerText = `Q${currentQuestion + 1}: ${q.q}`;
         answersDiv.innerHTML = "";
@@ -135,16 +119,13 @@ connectBtn.onclick = async () => {
         });
     }
 
-    // Select answer
     function selectAnswer(idx) {
         const q = quizQuestions[currentQuestion];
-        if (idx === q.correct) score += 1;
-        else score -= 1;
+        score += (idx === q.correct ? 1 : -1);
         currentQuestion++;
         loadQuestion();
     }
 
-    // Finish quiz
     async function finishQuiz() {
         quizDiv.style.display = "none";
         try {
@@ -158,7 +139,6 @@ connectBtn.onclick = async () => {
         }
     }
 
-    // Load top 100 leaderboard
     async function loadLeaderboard() {
         if (!contract) return;
         try {
