@@ -1,31 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Gokite Arena Quiz</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align:center; padding:20px; }
-        button { margin:5px; padding:10px 20px; font-size:16px; }
-        #options button { display:block; margin:5px auto; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Gokite Arena Game</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Gokite Arena Game</h1>
-    <div>Wallet: <span id="wallet">Not connected</span></div>
+  <h1>Gokite Arena Game</h1>
+
+  <div>
     <button id="joinBtn">Join Arena (0.01 KITE)</button>
+  </div>
 
+  <div>
+    <input type="number" id="score" placeholder="Enter your score">
+    <button id="updateBtn">Update Score</button>
+  </div>
 
-    <div id="quizArea" style="display:none;">
-        <h2 id="question"></h2>
-        <div id="options"></div>
-        <div>Timer: <span id="timer"></span> seconds</div>
-    </div>
+  <h2>Top 10 Players</h2>
+  <ul id="leaderboard"></ul>
 
-    <h3>Leaderboard (Top 100)</h3>
-    <ul id="leaderboard"></ul>
-
-   <!-- Load Ethers.js first -->
-<script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.umd.min.js"></script>
-<script src="script.js"></script>
+  <!-- Load ethers.js first -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.umd.min.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
