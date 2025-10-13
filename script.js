@@ -54,19 +54,20 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
 
     // Connect wallet
-   connectBtn.onclick = async () => {
+  connectBtn.onclick = async () => {
     try {
         if (!window.ethers) return alert("Ethers.js not loaded!");
         
-        // Wait a bit in case MetaMask hasn't injected yet
-        for (let i = 0; i < 10; i++) {
-            if (window.ethereum) break;
+        // Wait a bit for MetaMask / wallet to inject
+        let ethereum = window.ethereum;
+        for (let i = 0; i < 10 && !ethereum; i++) {
             await new Promise(r => setTimeout(r, 200));
+            ethereum = window.ethereum;
         }
-        
-        if (!window.ethereum) return alert("Please install MetaMask!");
 
-        provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+        if (!ethereum) return alert("Please install MetaMask or compatible wallet!");
+
+        provider = new ethers.providers.Web3Provider(ethereum, "any");
         await provider.send("eth_requestAccounts", []);
         signer = provider.getSigner();
         contract = new ethers.Contract(contractAddress, abi, signer);
@@ -79,6 +80,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         alert("Wallet connection failed: " + e.message);
     }
 };
+
 
     // Join Arena
     joinBtn.onclick = async () => {
