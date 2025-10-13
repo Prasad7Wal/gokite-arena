@@ -29,8 +29,13 @@ async function init() {
     signer = provider.getSigner();
     contract = new ethers.Contract(contractAddress, abi, signer);
 
+    // Enable buttons now
+    document.getElementById("join").disabled = false;
+    document.getElementById("update").disabled = false;
+
     loadLeaderboard(); // Load leaderboard immediately
 }
+
 
 window.addEventListener('load', init);
 
