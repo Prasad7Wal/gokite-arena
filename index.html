@@ -1,38 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Gokite Arena Quiz</title>
-  <style>
-    body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; }
-    input, button { padding: 10px; margin: 5px 0; font-size: 16px; }
-    #quizContainer { display: none; margin-top: 20px; }
-    #leaderboard { margin-top: 20px; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Gokite Arena Quiz</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Gokite Arena Game</h1>
+    <h1>Gokite Arena Quiz</h1>
 
-  <div>
-    <button id="joinBtn">Join Arena (0.01 KITE)</button>
-  </div>
+    <button id="connectWalletBtn">Connect Wallet</button>
+    <button id="joinArenaBtn" disabled>Join Arena (0.01 KITE)</button>
 
-  <div id="discordContainer" style="display:none;">
-    <input type="text" id="discordName" placeholder="Enter your Discord name">
-    <button id="startQuizBtn">Start Quiz</button>
-  </div>
+    <div id="discordDiv" style="display:none;">
+        <label>Enter Discord Name:</label>
+        <input type="text" id="discordName">
+        <button id="saveDiscordBtn">Save</button>
+    </div>
 
-  <div id="quizContainer">
-    <p id="questionText"></p>
-    <input type="text" id="answerInput" placeholder="Type your answer">
-    <button id="submitAnswerBtn">Submit Answer</button>
-    <p>Time left: <span id="timer">15</span>s</p>
-  </div>
+    <div id="quizDiv" style="display:none;">
+        <h2 id="questionText"></h2>
+        <div id="answers"></div>
+        <button id="nextQuestionBtn" disabled>Next Question</button>
+    </div>
 
-  <h2>Top 10 Players</h2>
-  <ul id="leaderboard"></ul>
+    <h2>Top 100 Leaderboard</h2>
+    <ul id="leaderboard"></ul>
 
-  <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.umd.min.js"></script>
-  <script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
