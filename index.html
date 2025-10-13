@@ -10,28 +10,22 @@
     <h1>Gokite Arena Game</h1>
 
     <!-- Step 1: Connect Wallet -->
-    <button id="connectWalletBtn">Connect Wallet</button>
+   <button id="connectWalletBtn">Connect Wallet</button>
+<button id="joinArenaBtn" disabled>Join Arena (0.01 KITE)</button>
 
-    <!-- Step 2: Join Arena -->
-    <button id="joinArenaBtn" disabled>Join Arena (0.01 KITE)</button>
+<div id="discordDiv" style="display:none;">
+  <input type="text" id="discordName" placeholder="Enter Discord Name">
+  <button id="saveDiscordBtn">Save</button>
+</div>
 
-    <!-- Step 3: Enter Discord -->
-    <div id="discordDiv" style="display:none;">
-        <label>Enter Discord Name:</label>
-        <input type="text" id="discordName">
-        <button id="saveDiscordBtn">Save</button>
-    </div>
+<div id="quizDiv" style="display:none;">
+  <div id="questionText"></div>
+  <div id="answers"></div>
+  <button id="nextQuestionBtn" disabled>Next Question</button>
+</div>
 
-    <!-- Step 4: Quiz -->
-    <div id="quizDiv" style="display:none;">
-        <h2 id="questionText"></h2>
-        <div id="answers"></div>
-        <button id="nextQuestionBtn" disabled>Next Question</button>
-    </div>
+<ul id="leaderboard"></ul>
 
-    <!-- Step 5: Leaderboard -->
-    <h2>Top 100 Players</h2>
-    <ul id="leaderboard"></ul>
 
     <script src="script.js"></script>
 </body>
