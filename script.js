@@ -60,16 +60,25 @@ async function getProvider() {
     return null;
 }
 
-// Connect wallet safely
+// Wait for wallet to be injected (Brave/Nightly fix)
+async function getEthereum() {
+    if (window.ethereum) return window.ethereum;
+    for (let i = 0; i < 10; i++) {
+        await new Promise(r => setTimeout(r, 200));
+        if (window.ethereum) return window.ethereum;
+    }
+    return null;
+}
+
+// Connect wallet
 connectBtn.onclick = async () => {
     try {
-        const ethereum = await getProvider();
+        const ethereum = await getEthereum();
         if (!ethereum) return alert("Please install MetaMask or compatible wallet!");
 
-        // Ensure ethers is loaded
-        if (!window.ethers) return alert("Ethers.js is not loaded!");
+        if (!window.ethers) return alert("Ethers.js not loaded!");
 
-        provider = new ethers.providers.Web3Provider(ethereum, "any"); // "any" for chain switching
+        provider = new ethers.providers.Web3Provider(ethereum, "any"); // "any" for chain flexibility
         await provider.send("eth_requestAccounts", []);
         signer = provider.getSigner();
         contract = new ethers.Contract(contractAddress, abi, signer);
