@@ -1,10 +1,12 @@
-// ====================== CONFIG ======================
-const contractAddress = "0xf8721539eaa06fb3b4fc62f4c1d20e4db13fd9d1"; // Your deployed contract
+const contractAddress = "0xf8721539eaa06fb3b4fc62f4c1d20e4db13fd9d1";
 const abi = [
     "function joinArena() payable",
     "function updateScore(uint256 _score)",
     "function topPlayers() view returns (address[] memory, uint256[] memory)"
 ];
+
+// rest of the script exactly as I wrote before
+
 
 let provider;
 let signer;
