@@ -4,17 +4,61 @@
     <meta charset="UTF-8">
     <title>GoKite Arena</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; text-align: center; }
-        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
-        input { padding: 5px; margin: 5px; }
-        #quizDiv, #discordDiv { display: none; margin-top: 20px; }
-        #leaderboard { margin-top: 20px; max-height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; list-style: none; }
-        #statusText { margin: 15px 0; font-weight: bold; }
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            text-align: center;
+            background: #f5f5f5;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border: none;
+            background: #007bff;
+            color: white;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        input {
+            padding: 10px;
+            margin: 5px;
+            width: 250px;
+            font-size: 16px;
+        }
+        #quizDiv, #discordDiv {
+            display: none;
+            margin-top: 20px;
+        }
+        #answers button {
+            display: block;
+            margin: 10px auto;
+            width: 200px;
+        }
+        #leaderboard {
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            list-style: none;
+            background: white;
+            text-align: left;
+        }
+        #statusText {
+            margin: 10px 0;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
 
 <h1>GoKite Arena Game</h1>
+
 <div id="statusText">Not connected</div>
 
 <button id="connectWalletBtn">Connect Wallet</button>
@@ -22,7 +66,7 @@
 
 <div id="discordDiv">
     <input type="text" id="discordName" placeholder="Enter Discord Name">
-    <button id="saveDiscordBtn">Start Quiz</button>
+    <button id="saveDiscordBtn">Save</button>
 </div>
 
 <div id="quizDiv">
@@ -33,9 +77,10 @@
 <h2>Top 100 Players</h2>
 <ul id="leaderboard"></ul>
 
-<!-- Ethers.js -->
+<!-- Ethers.js CDN -->
 <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.umd.min.js"></script>
-<!-- Game script -->
+
+<!-- Main script -->
 <script src="script.js"></script>
 
 </body>
