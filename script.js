@@ -1,4 +1,7 @@
 window.addEventListener("DOMContentLoaded", () => {
+    // your entire script.js code here
+});
+
     // ======== CONTRACT SETTINGS ========
     const contractAddress = "0xf8721539eaa06fb3b4fc62f4c1d20e4db13fd9d1"; // Replace with your contract
     const abi = [
