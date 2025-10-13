@@ -2,33 +2,39 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Gokite Arena Quiz</title>
-  <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.umd.min.js"></script>
-<script src="script.js"></script>
-
-    <link rel="stylesheet" href="style.css">
+    <title>Gokite Arena</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        button { padding: 10px 15px; margin: 5px; }
+        input { padding: 5px; margin: 5px; }
+        #quizDiv { display: none; margin-top: 20px; }
+        #discordDiv { display: none; margin-top: 20px; }
+        #leaderboard { margin-top: 20px; }
+    </style>
 </head>
 <body>
-    <h1>Gokite Arena Game</h1>
 
-    <!-- Step 1: Connect Wallet -->
-   <button id="connectWalletBtn">Connect Wallet</button>
+<h1>Gokite Arena Game</h1>
+
+<button id="connectWalletBtn">Connect Wallet</button>
 <button id="joinArenaBtn" disabled>Join Arena (0.01 KITE)</button>
 
-<div id="discordDiv" style="display:none;">
-  <input type="text" id="discordName" placeholder="Enter Discord Name">
-  <button id="saveDiscordBtn">Save</button>
+<div id="discordDiv">
+    <input type="text" id="discordName" placeholder="Enter Discord Name">
+    <button id="saveDiscordBtn">Save</button>
 </div>
 
-<div id="quizDiv" style="display:none;">
-  <div id="questionText"></div>
-  <div id="answers"></div>
-  <button id="nextQuestionBtn" disabled>Next Question</button>
+<div id="quizDiv">
+    <div id="questionText"></div>
+    <div id="answers"></div>
+    <button id="nextQuestionBtn" disabled>Next Question</button>
 </div>
 
+<h2>Top 100 Players</h2>
 <ul id="leaderboard"></ul>
 
+<script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.umd.min.js"></script>
+<script src="script.js"></script>
 
-    <script src="script.js"></script>
 </body>
 </html>
