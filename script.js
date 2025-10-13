@@ -1,83 +1,54 @@
-// ====================== CONFIG ======================
-const contractAddress = "0xf8721539eaa06fb3b4fc62f4c1d20e4db13fd9d1"; // Replace with your deployed contract
+const contractAddress = "0xf8721539eaa06fb3b4fc62f4c1d20e4db13fd9d1"; // Must be correct
 const abi = [
     "function joinArena() payable",
     "function updateScore(uint256 _score)",
     "function topPlayers() view returns (address[] memory, uint256[] memory)"
 ];
 
-let provider;
-let signer;
-let contract;
+let provider, signer, contract;
 
-// ====================== INIT ======================
 async function init() {
     console.log("Init started...");
     if (!window.ethereum) {
-        alert("MetaMask is not installed! Please install it to play.");
+        alert("Install MetaMask!");
         return;
     }
 
     provider = new ethers.providers.Web3Provider(window.ethereum);
 
     try {
-        // Request account access — triggers MetaMask popup
         await provider.send("eth_requestAccounts", []);
-        console.log("MetaMask connected!");
-    } catch (err) {
-        console.error("User rejected connection", err);
-        alert("Please connect your MetaMask wallet!");
-        return;
-    }
-
-    try {
         signer = provider.getSigner();
-        console.log("Signer ready:", await signer.getAddress());
+        console.log("Connected account:", await signer.getAddress());
+
         contract = new ethers.Contract(contractAddress, abi, signer);
-        console.log("Contract ready:", contract);
+        console.log("Contract loaded:", contract);
+
+        // Enable buttons
+        document.getElementById("join").disabled = false;
+        document.getElementById("update").disabled = false;
+
+        loadLeaderboard();
     } catch (err) {
-        console.error("Error initializing contract", err);
-        alert("Failed to initialize contract. Check contract address and ABI.");
-        return;
+        console.error("Init failed:", err);
+        alert("Contract not ready or circuit breaker active.");
     }
-
-    // Enable buttons only after everything is ready
-    document.getElementById("join").disabled = false;
-    document.getElementById("update").disabled = false;
-    console.log("Buttons enabled");
-
-    // Load leaderboard immediately
-    loadLeaderboard();
 }
 
-
-// Call init() after window loads
-window.addEventListener('load', init);
-
-
-// ====================== BUTTON EVENTS ======================
 document.getElementById("join").onclick = async () => {
-    if (!contract) return alert("Contract not initialized.");
-
     try {
         const tx = await contract.joinArena({ value: ethers.utils.parseEther("0.01") });
         await tx.wait();
-        alert("You joined the arena!");
+        alert("Joined arena!");
         loadLeaderboard();
     } catch (err) {
         console.error(err);
-        alert("Failed to join arena. Make sure you are on Kite AI Testnet and have enough test tokens.");
+        alert("Join failed. Check console.");
     }
 };
 
 document.getElementById("update").onclick = async () => {
-    if (!contract) return alert("Contract not initialized.");
-
-    const scoreInput = document.getElementById("score").value;
-    if (!scoreInput || isNaN(scoreInput)) return alert("Enter a valid score.");
-
-    const score = parseInt(scoreInput);
-
+    const score = parseInt(document.getElementById("score").value);
     try {
         const tx = await contract.updateScore(score);
         await tx.wait();
@@ -85,25 +56,23 @@ document.getElementById("update").onclick = async () => {
         loadLeaderboard();
     } catch (err) {
         console.error(err);
-        alert("Failed to update score. Make sure you are on Kite AI Testnet.");
+        alert("Update failed. Check console.");
     }
 };
 
-// ====================== LOAD LEADERBOARD ======================
 async function loadLeaderboard() {
-    if (!contract) return;
-
     try {
-        const [topPlayers, scores] = await contract.topPlayers();
+        const [players, scores] = await contract.topPlayers();
         const ul = document.getElementById("leaderboard");
         ul.innerHTML = "";
-
-        for (let i = 0; i < topPlayers.length; i++) {
+        for (let i = 0; i < players.length; i++) {
             const li = document.createElement("li");
-            li.innerText = `${topPlayers[i]} : ${scores[i]} points`;
+            li.innerText = `${players[i]} : ${scores[i]} points`;
             ul.appendChild(li);
         }
     } catch (err) {
-        console.error(err);
+        console.error("Load leaderboard failed:", err);
     }
 }
+
+init();
