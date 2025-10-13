@@ -54,24 +54,31 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
 
     // Connect wallet
-    connectBtn.onclick = async () => {
-        try {
-            const ethereum = await waitForEthereum();
-            if (!ethereum) return alert("Please install MetaMask or compatible wallet!");
-
-            provider = new ethers.providers.Web3Provider(ethereum, "any"); // "any" allows chain switching
-            await provider.send("eth_requestAccounts", []);
-            signer = provider.getSigner();
-            contract = new ethers.Contract(contractAddress, abi, signer);
-
-            connectBtn.disabled = true;
-            joinBtn.disabled = false;
-            alert("Wallet connected!");
-        } catch (e) {
-            console.error(e);
-            alert("Wallet connection failed: " + e.message);
+   connectBtn.onclick = async () => {
+    try {
+        if (!window.ethers) return alert("Ethers.js not loaded!");
+        
+        // Wait a bit in case MetaMask hasn't injected yet
+        for (let i = 0; i < 10; i++) {
+            if (window.ethereum) break;
+            await new Promise(r => setTimeout(r, 200));
         }
-    };
+        
+        if (!window.ethereum) return alert("Please install MetaMask!");
+
+        provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+        await provider.send("eth_requestAccounts", []);
+        signer = provider.getSigner();
+        contract = new ethers.Contract(contractAddress, abi, signer);
+
+        connectBtn.disabled = true;
+        joinBtn.disabled = false;
+        alert("Wallet connected!");
+    } catch (e) {
+        console.error(e);
+        alert("Wallet connection failed: " + e.message);
+    }
+};
 
     // Join Arena
     joinBtn.onclick = async () => {
