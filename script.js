@@ -42,14 +42,14 @@ window.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    // Connect wallet
+   // Connect wallet
 connectBtn.onclick = async () => {
     try {
         if (window.ethereum) {
-            provider = new window.ethers.providers.Web3Provider(window.ethereum);
+            provider = new ethers.providers.Web3Provider(window.ethereum);
             await provider.send("eth_requestAccounts", []);
             signer = provider.getSigner();
-            contract = new window.ethers.Contract(contractAddress, abi, signer);
+            contract = new ethers.Contract(contractAddress, abi, signer);
             connectBtn.disabled = true;
             joinBtn.disabled = false;
             alert("Wallet connected!");
