@@ -1,27 +1,20 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Gokite Arena</title>
-    <link rel="stylesheet" href="style.css">
+  <title>Gokite Arena</title>
 </head>
 <body>
-    <h1>Gokite Arena Game</h1>
+  <h1>Gokite Arena Game</h1>
 
-<button id="join" disabled>Join Arena (0.01 KITE)</button>
+  <button id="join" disabled>Join Arena (0.01 KITE)</button>
+  <input type="number" id="score" placeholder="Enter your score" />
+  <button id="update" disabled>Update Score</button>
 
-<div>
-    <input type="number" id="score" placeholder="Enter your score">
-    <button id="update" disabled>Update Score</button>
-</div>
+  <h3>Top 10 Players</h3>
+  <ul id="leaderboard"></ul>
 
-
-    <h2>Top 10 Players</h2>
-    <ul id="leaderboard"></ul>
-
-    <!-- ===== Load ethers.js browser-compatible version ===== -->
-    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-    <!-- ===== Load your script ===== -->
-    <script src="script.js"></script>
+  <!-- Load ethers.js first -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
