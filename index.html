@@ -3,41 +3,205 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Gokite Arena</title>
-  <link rel="icon" href="favicon.ico" />
-  <link rel="stylesheet" href="style.css" />
+  <title>Wallet Connect Test</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;background:#f3f4f6;color:#111;padding:28px;}
+    .card{max-width:700px;margin:30px auto;background:#fff;padding:20px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.06);}
+    button{padding:10px 16px;border-radius:8px;border:0;background:#2563eb;color:#fff;cursor:pointer;font-weight:700}
+    button:disabled{opacity:.5;cursor:not-allowed}
+    .status{margin:12px 0;color:#374151}
+    .info{font-size:13px;color:#6b7280}
+    pre{background:#0f1724;color:#d1fae5;padding:10px;border-radius:6px;overflow:auto}
+  </style>
 </head>
 <body>
-  <main class="container">
-    <h1>Gokite Arena 🎮</h1>
+  <div class="card">
+    <h1>Wallet Connect (Test)</h1>
+    <div class="status">Status: <strong id="statusText">Not connected</strong></div>
 
-    <div id="status" class="status">Status: <span id="statusText">Not connected</span></div>
-
-    <div class="controls">
-      <button id="connectWalletBtn">Connect Wallet</button>
-      <button id="joinArenaBtn" disabled>Join Arena (0.01 KITE)</button>
+    <div style="margin-bottom:12px;">
+      <button id="connectBtn">Connect Wallet</button>
+      <button id="disconnectBtn" disabled>Disconnect</button>
     </div>
 
-    <div id="discordDiv" class="box" hidden>
-      <label>Discord name</label>
-      <input id="discordName" placeholder="e.g. Prasad#1234" />
-      <button id="saveDiscordBtn">Save & Start Quiz</button>
+    <div class="info">
+      <div>Account: <span id="account">—</span></div>
+      <div>Chain ID: <span id="chain">—</span></div>
     </div>
 
-    <div id="quizDiv" class="box" hidden>
-      <div id="questionText" class="question"></div>
-      <div id="answers"></div>
-      <div class="small">Question <span id="qIndex">0</span> / 10</div>
-    </div>
+    <h3 style="margin-top:16px;">Console logs (for debugging)</h3>
+    <pre id="log">Open DevTools console too (F12) — logs will show there as well.</pre>
+  </div>
 
-    <h2>Top 100 Players</h2>
-    <ul id="leaderboard" class="leaderboard"></ul>
-  </main>
-
-  <!-- ethers.js UMD (global `ethers`) -->
+  <!-- ethers UMD (global `ethers`) -->
   <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.umd.min.js" defer></script>
 
-  <!-- Your app script (defer so it runs after DOM and after ethers script tag is parsed) -->
-  <script src="script.js" defer></script>
+  <!-- Minimal wallet connect logic -->
+  <script defer>
+  (function(){
+    const statusText = document.getElementById('statusText');
+    const accountEl = document.getElementById('account');
+    const chainEl = document.getElementById('chain');
+    const connectBtn = document.getElementById('connectBtn');
+    const disconnectBtn = document.getElementById('disconnectBtn');
+    const logEl = document.getElementById('log');
+
+    function log(...args){ 
+      console.log(...args);
+      logEl.textContent += "\\n" + args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ');
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function setStatus(s){ statusText.innerText = s; log('STATUS:', s); }
+
+    // wait for ethers UMD global
+    async function waitEthers(timeout=3000){
+      const start = Date.now();
+      while (typeof window.ethers === 'undefined'){
+        if (Date.now() - start > timeout) break;
+        await new Promise(r => setTimeout(r, 100));
+      }
+      return typeof window.ethers !== 'undefined';
+    }
+
+    // wait for wallet injection (some wallets inject after load)
+    async function waitForWallet(timeout=5000){
+      const interval = 200;
+      const attempts = Math.ceil(timeout/interval);
+      for (let i=0;i<attempts;i++){
+        if (window.ethereum) return window.ethereum;
+        await new Promise(r => setTimeout(r, interval));
+      }
+      return null;
+    }
+
+    // pick preferred provider (MetaMask if available)
+    function pickProvider(){
+      if (!window.ethereum) return null;
+      if (Array.isArray(window.ethereum.providers) && window.ethereum.providers.length){
+        const mm = window.ethereum.providers.find(p => p.isMetaMask);
+        if (mm) return mm;
+        return window.ethereum.providers[0];
+      }
+      return window.ethereum;
+    }
+
+    let ethersProvider = null;
+    let signer = null;
+    let connectedAccount = null;
+    let chosenProvider = null;
+
+    // connect flow
+    async function connect(){
+      setStatus('Initializing...');
+      const ok = await waitEthers();
+      if (!ok){
+        alert('Ethers.js failed to load. Check your network or the CDN.');
+        setStatus('Ethers.js not loaded');
+        return;
+      }
+      setStatus('Waiting for injected wallet...');
+      const injected = await waitForWallet(5000);
+      if (!injected){
+        alert('No injected wallet found. Install MetaMask or other browser wallet and retry.');
+        setStatus('No injected wallet');
+        return;
+      }
+
+      chosenProvider = pickProvider();
+      if (!chosenProvider){
+        alert('No usable injected provider detected.');
+        setStatus('Provider pick failed');
+        return;
+      }
+
+      if (!window.ethers || !window.ethers.providers || !window.ethers.providers.Web3Provider){
+        alert('Ethers.js not available.');
+        setStatus('Ethers missing');
+        return;
+      }
+
+      try {
+        ethersProvider = new ethers.providers.Web3Provider(chosenProvider, 'any'); // safe
+        // request accounts -> opens MetaMask popup
+        await ethersProvider.send('eth_requestAccounts', []);
+        signer = ethersProvider.getSigner();
+        connectedAccount = await signer.getAddress();
+        const network = await ethersProvider.getNetwork();
+
+        accountEl.innerText = connectedAccount;
+        chainEl.innerText = network.chainId;
+        setStatus('Connected');
+        connectBtn.disabled = true;
+        disconnectBtn.disabled = false;
+
+        // attach listeners if provider supports them
+        try {
+          if (chosenProvider.on){
+            chosenProvider.on('accountsChanged', (accounts) => {
+              log('accountsChanged', accounts);
+              if (!accounts || accounts.length === 0){
+                setStatus('Wallet locked');
+                accountEl.innerText = '—';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+              } else {
+                connectedAccount = accounts[0];
+                accountEl.innerText = connectedAccount;
+                setStatus('Account changed');
+              }
+            });
+            chosenProvider.on('chainChanged', (chainId) => {
+              log('chainChanged', chainId);
+              chainEl.innerText = chainId;
+              setStatus('Chain changed: ' + chainId);
+            });
+            chosenProvider.on('disconnect', (err) => {
+              log('disconnect', err);
+              disconnect();
+            });
+          }
+        } catch(e){
+          log('provider.on attach failed', e);
+        }
+
+        log('Connected account', connectedAccount);
+      } catch(err){
+        console.error('connect error', err);
+        alert('Wallet connection failed: ' + (err && err.message ? err.message : String(err)));
+        setStatus('Not connected');
+      }
+    }
+
+    // simple disconnect (UI only; cannot fully remove extension injection)
+    function disconnect(){
+      setStatus('Disconnected (UI)');
+      accountEl.innerText = '—';
+      chainEl.innerText = '—';
+      connectBtn.disabled = false;
+      disconnectBtn.disabled = true;
+      // remove listeners where possible
+      try {
+        if (chosenProvider && chosenProvider.removeListener){
+          chosenProvider.removeListener('accountsChanged', ()=>{});
+          chosenProvider.removeListener('chainChanged', ()=>{});
+          chosenProvider.removeListener('disconnect', ()=>{});
+        }
+      } catch(e){ /* ignore */ }
+      ethersProvider = null;
+      signer = null;
+      connectedAccount = null;
+      chosenProvider = null;
+      log('Disconnected (UI only). To fully disconnect, lock your wallet extension.');
+    }
+
+    // wire buttons
+    connectBtn.addEventListener('click', connect);
+    disconnectBtn.addEventListener('click', disconnect);
+
+    // initial UI state
+    setStatus('Ready (not connected)');
+  })();
+  </script>
 </body>
 </html>
