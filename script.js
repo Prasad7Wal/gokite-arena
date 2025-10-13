@@ -39,33 +39,36 @@ const quizQuestions = [
 // --- STATUS HELPER ---
 function setStatus(msg){ statusText.innerText = msg; }
 
-// --- Pick injected wallet ---
-function getInjectedProvider() {
-  if(!window.ethereum) return null;
-  if(Array.isArray(window.ethereum.providers)){
-    const mm = window.ethereum.providers.find(p => p.isMetaMask);
-    if(mm) return mm;
-    return window.ethereum.providers[0];
+// --- Safe Wallet Provider ---
+async function getProviderSafe(timeout=5000){
+  const interval=200;
+  const attempts=Math.ceil(timeout/interval);
+  for(let i=0;i<attempts;i++){
+    if(window.ethereum){
+      if(Array.isArray(window.ethereum.providers)){
+        const mm=window.ethereum.providers.find(p=>p.isMetaMask);
+        return mm||window.ethereum.providers[0];
+      }
+      return window.ethereum;
+    }
+    await new Promise(r=>setTimeout(r,interval));
   }
-  return window.ethereum;
+  throw new Error("No Ethereum wallet detected.");
 }
 
 // --- CONNECT WALLET ---
 async function connectWallet(){
   try{
     setStatus("Detecting wallet...");
-    const ethereum = getInjectedProvider();
-    if(!ethereum) throw new Error("No wallet detected. Install MetaMask or compatible wallet.");
-
+    const ethereum = await getProviderSafe();
     await ethereum.request({ method:"eth_requestAccounts" });
-
-    provider = new ethers.providers.Web3Provider(ethereum, "any");
+    provider = new ethers.providers.Web3Provider(ethereum,"any");
     signer = provider.getSigner();
     userAddress = await signer.getAddress();
 
     setStatus(`✅ Connected: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`);
-    connectBtn.disabled = true;
-    joinBtn.disabled = false;
+    connectBtn.disabled=true;
+    joinBtn.disabled=false;
 
     contract = new ethers.Contract(contractAddress, abi, signer);
 
@@ -75,7 +78,7 @@ async function connectWallet(){
         connectBtn.disabled=false;
         joinBtn.disabled=true;
       }else{
-        userAddress = accounts[0];
+        userAddress=accounts[0];
         setStatus(`✅ Connected: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`);
       }
     });
@@ -117,15 +120,14 @@ function startQuiz(){
 
 function loadQuestion(){
   if(currentQuestion>=quizQuestions.length) return finishQuiz();
-  const q = quizQuestions[currentQuestion];
+  const q=quizQuestions[currentQuestion];
   questionText.textContent=q.q;
   answersDiv.innerHTML="";
-  q.a.forEach((ans, idx)=>{
+  q.a.forEach((ans,idx)=>{
     const btn=document.createElement("button");
     btn.textContent=ans;
     btn.onclick=()=>{
-      if(idx===q.correct) score+=1;
-      else score-=1;
+      score+=(idx===q.correct?1:-1);
       currentQuestion++;
       loadQuestion();
     };
@@ -168,11 +170,11 @@ async function loadLeaderboard(){
 }
 
 // --- EVENTS ---
-connectBtn.addEventListener("click", connectWallet);
-joinBtn.addEventListener("click", joinArena);
-saveDiscordBtn.addEventListener("click", startQuiz);
+connectBtn.addEventListener("click",connectWallet);
+joinBtn.addEventListener("click",joinArena);
+saveDiscordBtn.addEventListener("click",startQuiz);
 
-// --- INITIAL STATE ---
+// --- INITIAL UI STATE ---
 setStatus("Not connected");
 joinBtn.disabled=true;
 discordDiv.classList.add("hidden");
