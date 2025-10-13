@@ -51,6 +51,39 @@
     return null;
   }
 
+  async function getProvider() {
+    // Wait for window.ethereum
+    for (let i = 0; i < 50; i++) {
+        if (window.ethereum) break;
+        await new Promise(r => setTimeout(r, 100));
+    }
+    if (!window.ethereum) throw new Error("No wallet found!");
+
+    // Pick MetaMask if multiple providers exist
+    if (Array.isArray(window.ethereum.providers)) {
+        const mm = window.ethereum.providers.find(p => p.isMetaMask);
+        if (mm) return mm;
+        return window.ethereum.providers[0];
+    }
+
+    return window.ethereum;
+}
+
+async function connectWalletFlow() {
+    try {
+        const ethereum = await getProvider();
+        const provider = new ethers.providers.Web3Provider(ethereum, "any");
+        await provider.send("eth_requestAccounts", []);
+        const signer = provider.getSigner();
+        const account = await signer.getAddress();
+        console.log("Wallet connected:", account);
+        return { provider, signer, account };
+    } catch (err) {
+        console.error("connectWalletFlow error:", err);
+        alert(err.message);
+    }
+}
+
   // --- select proper provider if multiple injected wallets exist ---
   function pickProvider() {
     if (!window.ethereum) return null;
