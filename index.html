@@ -15,16 +15,14 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
       text-align: center;
+      min-height: 100vh;
       margin: 0;
+      padding: 20px;
     }
-    h1 {
-      font-size: 2rem;
-      margin-bottom: 10px;
-    }
+    h1 { font-size: 2rem; margin-bottom: 10px; }
     p#statusText {
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255,255,255,0.1);
       padding: 10px 20px;
       border-radius: 8px;
       margin: 10px 0 20px;
@@ -41,20 +39,19 @@
       margin: 5px;
       transition: all 0.3s ease;
     }
-    button:hover {
-      background-color: #0077ff;
-      transform: scale(1.05);
+    button:hover { background-color: #0077ff; transform: scale(1.05); }
+    button:disabled { background-color: #444; cursor: not-allowed; }
+    input {
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      width: 200px;
+      text-align: center;
+      margin-top: 10px;
     }
-    button:disabled {
-      background-color: #444;
-      cursor: not-allowed;
-    }
-    footer {
-      position: absolute;
-      bottom: 20px;
-      font-size: 14px;
-      opacity: 0.8;
-    }
+    #quizDiv, #discordDiv, #leaderboardDiv { display: none; margin-top: 20px; }
+    #answers button { display: block; margin: 8px auto; width: 220px; }
+    footer { position: relative; margin-top: 40px; font-size: 14px; opacity: 0.8; }
   </style>
 </head>
 <body>
@@ -66,17 +63,40 @@
     <button id="joinArenaBtn" disabled>⚔️ Join Arena</button>
   </div>
 
+  <div id="discordDiv">
+    <h3>Enter Discord Name</h3>
+    <input id="discordName" placeholder="Your Discord" />
+    <button id="saveDiscordBtn">✅ Start Quiz</button>
+  </div>
+
+  <div id="quizDiv">
+    <h3 id="questionText"></h3>
+    <div id="answers"></div>
+  </div>
+
+  <div id="leaderboardDiv">
+    <h3>🏁 Leaderboard</h3>
+    <ul id="leaderboard"></ul>
+  </div>
+
   <footer>Built on GoKite AI ⚙️</footer>
 
-  <!-- ✅ Ethers.js v6 CDN -->
+  <!-- ✅ Ethers.js v6 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.6.0/ethers.umd.min.js"></script>
 
-  <!-- ✅ Main Script -->
   <script>
   (async () => {
     const connectBtn = document.getElementById("connectWalletBtn");
     const joinBtn = document.getElementById("joinArenaBtn");
     const statusText = document.getElementById("statusText");
+    const discordDiv = document.getElementById("discordDiv");
+    const quizDiv = document.getElementById("quizDiv");
+    const leaderboardDiv = document.getElementById("leaderboardDiv");
+    const discordInput = document.getElementById("discordName");
+    const saveDiscordBtn = document.getElementById("saveDiscordBtn");
+    const questionText = document.getElementById("questionText");
+    const answersDiv = document.getElementById("answers");
+    const leaderboardUl = document.getElementById("leaderboard");
 
     const contractAddress = "0xf8721539eaa06fb3b4fc62f4c1d20e4db13fd9d1";
     const abi = [
@@ -85,63 +105,117 @@
       "function topPlayers() view returns (string[] memory, uint256[] memory)"
     ];
 
-    let provider, signer, contract, account;
+    let provider, signer, contract, account, score = 0, currentQuestion = 0, userDiscord = "";
 
-    function setStatus(msg) {
-      console.log(msg);
-      statusText.innerText = msg;
-    }
+    const quizQuestions = [
+      { q: "What is GoKite AI?", a: ["Blockchain platform", "App", "Video codec", "Database"], correct: 0 },
+      { q: "Token symbol used?", a: ["KITE","ETH","BTC","SOL"], correct: 0 },
+      { q: "Wallet required?", a: ["Yes","No","Optional","Later"], correct: 0 },
+      { q: "Quiz questions per round?", a: ["10","5","20","15"], correct: 0 },
+      { q: "Points for correct?", a: ["1","2","5","0"], correct: 0 },
+      { q: "Points for wrong?", a: ["-1","0","1","2"], correct: 0 },
+      { q: "Leaderboard shows?", a: ["Discord","Wallet","Email","Name"], correct: 0 },
+      { q: "Deposit amount?", a: ["0.01","0.1","1","0.001"], correct: 0 },
+      { q: "Should wait for provider?", a: ["Yes","No","Sometimes","Never"], correct: 0 },
+      { q: "Hosting free on GitHub Pages?", a: ["Yes","No","Only paid","Server needed"], correct: 0 }
+    ];
 
-    // ✅ Connect Wallet
+    function setStatus(msg) { console.log(msg); statusText.innerText = msg; }
+
     async function connectWallet() {
       try {
-        if (!window.ethereum) {
-          alert("Please install MetaMask or a compatible wallet!");
-          return;
-        }
-
+        if (!window.ethereum) return alert("Please install MetaMask!");
         provider = new ethers.BrowserProvider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
         signer = await provider.getSigner();
         account = await signer.getAddress();
-
         contract = new ethers.Contract(contractAddress, abi, signer);
-        setStatus("✅ Wallet connected: " + account.slice(0, 6) + "..." + account.slice(-4));
-
+        setStatus("✅ Connected: " + account.slice(0,6) + "..." + account.slice(-4));
         connectBtn.disabled = true;
         joinBtn.disabled = false;
-      } catch (err) {
-        console.error("Connection error:", err);
-        setStatus("❌ Connection failed: " + (err.message || err));
+      } catch (e) {
+        console.error(e); setStatus("❌ Connect failed: " + e.message);
       }
     }
 
-    // ✅ Join Arena Transaction
     async function joinArena() {
-      if (!contract) {
-        alert("Connect your wallet first!");
-        return;
-      }
-
       try {
-        setStatus("⏳ Sending transaction...");
-        const tx = await contract.joinArena({
-          value: ethers.parseEther("0.01") // 0.01 ETH deposit
-        });
+        setStatus("⏳ Joining Arena...");
+        const tx = await contract.joinArena({ value: ethers.parseEther("0.01") });
         await tx.wait();
-        setStatus("🎉 Joined Arena successfully!");
-      } catch (err) {
-        console.error("Join failed:", err);
-        setStatus("❌ Transaction failed: " + (err.message || err));
+        setStatus("🎉 Joined! Enter your Discord name to begin.");
+        joinBtn.disabled = true;
+        discordDiv.style.display = "block";
+      } catch (e) {
+        console.error(e);
+        setStatus("❌ Join failed: " + e.message);
       }
     }
 
-    connectBtn.addEventListener("click", connectWallet);
-    joinBtn.addEventListener("click", joinArena);
+    function startQuiz() {
+      userDiscord = discordInput.value.trim();
+      if (!userDiscord) return alert("Enter Discord name!");
+      discordDiv.style.display = "none";
+      quizDiv.style.display = "block";
+      loadQuestion();
+    }
 
-    // UI Defaults
-    joinBtn.disabled = true;
+    function loadQuestion() {
+      if (currentQuestion >= quizQuestions.length) return finishQuiz();
+      const q = quizQuestions[currentQuestion];
+      questionText.textContent = q.q;
+      answersDiv.innerHTML = "";
+      q.a.forEach((ans, idx) => {
+        const btn = document.createElement("button");
+        btn.textContent = ans;
+        btn.onclick = () => {
+          if (idx === q.correct) score++;
+          else score--;
+          currentQuestion++;
+          loadQuestion();
+        };
+        answersDiv.appendChild(btn);
+      });
+    }
+
+    async function finishQuiz() {
+      quizDiv.style.display = "none";
+      setStatus("⏳ Submitting score...");
+      try {
+        const tx = await contract.updateScore(score, userDiscord);
+        await tx.wait();
+        setStatus("✅ Score submitted!");
+        await loadLeaderboard();
+      } catch (e) {
+        console.error(e);
+        setStatus("❌ Submit failed: " + e.message);
+      }
+    }
+
+    async function loadLeaderboard() {
+      leaderboardDiv.style.display = "block";
+      leaderboardUl.innerHTML = "";
+      setStatus("🏁 Loading leaderboard...");
+      try {
+        const [names, scores] = await contract.topPlayers();
+        for (let i = 0; i < names.length; i++) {
+          const li = document.createElement("li");
+          li.textContent = `${i+1}. ${names[i]} — ${scores[i]} pts`;
+          leaderboardUl.appendChild(li);
+        }
+        setStatus("✅ Leaderboard loaded!");
+      } catch (e) {
+        console.error(e);
+        setStatus("❌ Leaderboard failed: " + e.message);
+      }
+    }
+
+    connectBtn.onclick = connectWallet;
+    joinBtn.onclick = joinArena;
+    saveDiscordBtn.onclick = startQuiz;
+
     setStatus("🔴 Wallet not connected");
+    joinBtn.disabled = true;
   })();
   </script>
 </body>
