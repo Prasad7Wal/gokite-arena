@@ -1,37 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GoKite Arena</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GoKite Arena — Robust DApp</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <main class="container">
+    <h1>🏆 GoKite Arena</h1>
 
-<h1>GoKite Arena Game</h1>
-<p id="statusText">Not connected</p>
+    <div id="status" class="status">Status: idle</div>
 
-<button id="connectWalletBtn">Connect Wallet</button>
-<button id="joinArenaBtn" disabled>Join Arena (0.01 KITE)</button>
+    <div class="controls">
+      <button id="connectBtn">🔗 Connect Wallet</button>
+      <button id="joinBtn" disabled>⚔️ Join Arena (0.01 KITE)</button>
+    </div>
 
-<div id="discordDiv" class="hidden">
-    <input type="text" id="discordName" placeholder="Enter Discord Name">
-    <button id="saveDiscordBtn">Save</button>
-</div>
+    <section id="discordSection" class="panel hidden">
+      <h3>Enter Discord Name</h3>
+      <input id="discordInput" placeholder="Discord#1234 or your handle" />
+      <button id="startQuizBtn">Start Quiz</button>
+    </section>
 
-<div id="quizDiv" class="hidden">
-    <div id="questionText"></div>
-    <div id="answers"></div>
-</div>
+    <section id="quizSection" class="panel hidden">
+      <h3 id="questionTitle">Question</h3>
+      <div id="answers"></div>
+    </section>
 
-<h2>Top 100 Players</h2>
-<ul id="leaderboard"></ul>
+    <section id="leaderboardSection" class="panel hidden">
+      <h3>Top Players (up to 100)</h3>
+      <ol id="leaderboard"></ol>
+    </section>
 
-<!-- Load Ethers.js -->
-<script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.umd.min.js"></script>
-<!-- Load our main JS -->
-<script src="script.js"></script>
+    <footer class="footer">Built for GoKite AI — Testnet friendly</footer>
+  </main>
 
+  <!-- Ethers.js fallback loader: first CDN + fallback if blocked -->
+  <script>
+    // small loader: tries CDN1 then CDN2; resolves when window.ethers exists
+    (function loadEthersThenApp() {
+      const cdnList = [
+        "https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js",
+        "https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"
+      ];
+
+      function tryLoad(url) {
+        return new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = url;
+          s.async = true;
+          s.onload = () => resolve(true);
+          s.onerror = () => reject(new Error('failed to load ' + url));
+          document.head.appendChild(s);
+        });
+      }
+
+      (async () => {
+        // try each CDN until ethers appears
+        for (let url of cdnList) {
+          if (window.ethers) break;
+          try {
+            await tryLoad(url);
+            // small wait for the UMD to populate
+            for (let i=0;i<20 && !window.ethers;i++){
+              await new Promise(r=>setTimeout(r,100));
+            }
+            if (window.ethers) break;
+          } catch (_) { /* try next */ }
+        }
+
+        // final check
+        if (!window.ethers) {
+          // show a clear message; the main app script will still try but will show friendly error
+          document.getElementById('status').innerText = 'Status: ERROR — ethers.js failed to load (check network or script blocker)';
+        }
+
+        // load main app script as a module-style injection to avoid another network dependency:
+        const s = document.createElement('script');
+        s.src = 'script.js';
+        s.defer = true;
+        document.body.appendChild(s);
+      })();
+    })();
+  </script>
 </body>
 </html>
-
