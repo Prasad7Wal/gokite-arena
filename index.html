@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Gokite Arena</title>
-<style>
-    body { font-family: Arial, sans-serif; padding: 20px; text-align:center; }
-    button { padding: 10px 20px; margin: 5px; cursor: pointer; }
-    input { padding: 5px; margin: 5px; }
-    #quizDiv, #discordDiv { display: none; margin-top: 20px; }
-    #leaderboard { margin-top: 20px; max-height: 400px; overflow-y: auto; border:1px solid #ccc; padding:10px; list-style:none; text-align:left;}
-</style>
+    <meta charset="UTF-8">
+    <title>Gokite Arena</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; text-align: center; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        input { padding: 5px; margin: 5px; }
+        #quizDiv, #discordDiv { display: none; margin-top: 20px; }
+        #leaderboard { margin-top: 20px; max-height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; list-style: none; }
+    </style>
 </head>
 <body>
 
@@ -31,13 +31,11 @@
 <h2>Top 100 Players</h2>
 <ul id="leaderboard"></ul>
 
-<!-- Load ethers.js first -->
+<!-- ✅ Load ethers.js first -->
 <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.umd.min.js"></script>
 
-<!-- Then your custom script -->
+<!-- ✅ Load your JS last -->
 <script src="script.js"></script>
-
-
 
 </body>
 </html>
