@@ -1,3 +1,7 @@
+if (!window.ethers) {
+    alert("Ethers.js not loaded! Make sure the CDN script is included first.");
+}
+
 window.addEventListener("DOMContentLoaded", () => {
 
     const contractAddress = "0xf8721539eaa06fb3b4fc62f4c1d20e4db13fd9d1"; 
