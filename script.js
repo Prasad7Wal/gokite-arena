@@ -1,6 +1,6 @@
 window.addEventListener("DOMContentLoaded", () => {
 
-const contractAddress = "0xf8721539eaa06fb3b4fc62f4c1d20e4db13fd9d1"; // Replace with your deployed contract
+const contractAddress = "0xf8721539eaa06fb3b4fc62f4c1d20e4db13fd9d1"; // Replace with your contract
 const abi = [
     "function joinArena() payable",
     "function updateScore(uint256 _score, string calldata _discord)",
@@ -25,7 +25,7 @@ const quizQuestions = [
     { q: "Quiz updates?", a: ["Weekly", "Daily", "Monthly", "Never"], correct: 0 }
 ];
 
-// Buttons & divs
+// DOM elements
 const connectBtn = document.getElementById("connectWalletBtn");
 const joinBtn = document.getElementById("joinArenaBtn");
 const discordDiv = document.getElementById("discordDiv");
@@ -34,7 +34,6 @@ const discordInput = document.getElementById("discordName");
 const quizDiv = document.getElementById("quizDiv");
 const questionText = document.getElementById("questionText");
 const answersDiv = document.getElementById("answers");
-const nextBtn = document.getElementById("nextQuestionBtn");
 const leaderboardUl = document.getElementById("leaderboard");
 
 // Connect wallet
@@ -67,7 +66,7 @@ joinBtn.onclick = async () => {
     }
 };
 
-// Save Discord Name
+// Save Discord name
 saveDiscordBtn.onclick = () => {
     const name = discordInput.value.trim();
     if (!name) return alert("Enter Discord name!");
@@ -77,7 +76,7 @@ saveDiscordBtn.onclick = () => {
     loadQuestion();
 };
 
-// Load question
+// Load quiz question
 function loadQuestion() {
     if (currentQuestion >= quizQuestions.length) {
         finishQuiz();
@@ -94,7 +93,7 @@ function loadQuestion() {
     });
 }
 
-// Handle answer
+// Select answer
 function selectAnswer(idx) {
     const q = quizQuestions[currentQuestion];
     if (idx === q.correct) score += 1;
