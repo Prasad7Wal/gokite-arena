@@ -2,86 +2,55 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>GoKite Arena</title>
+    <title>Wallet Connect Test</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            text-align: center;
-            background: #f5f5f5;
-        }
-        button {
-            padding: 10px 20px;
-            margin: 5px;
-            cursor: pointer;
-            border: none;
-            background: #007bff;
-            color: white;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-        input {
-            padding: 10px;
-            margin: 5px;
-            width: 250px;
-            font-size: 16px;
-        }
-        #quizDiv, #discordDiv {
-            display: none;
-            margin-top: 20px;
-        }
-        #answers button {
-            display: block;
-            margin: 10px auto;
-            width: 200px;
-        }
-        #leaderboard {
-            margin-top: 20px;
-            max-height: 400px;
-            overflow-y: auto;
-            border: 1px solid #ccc;
-            padding: 10px;
-            list-style: none;
-            background: white;
-            text-align: left;
-        }
-        #statusText {
-            margin: 10px 0;
-            font-weight: bold;
-        }
+        body { font-family: Arial; text-align: center; padding: 50px; background: #f5f5f5; }
+        button { padding: 10px 20px; margin: 10px; font-size: 16px; cursor: pointer; }
+        #status { margin-top: 20px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<h1>GoKite Arena Game</h1>
-
-<div id="statusText">Not connected</div>
-
-<button id="connectWalletBtn">Connect Wallet</button>
-<button id="joinArenaBtn" disabled>Join Arena (0.01 KITE)</button>
-
-<div id="discordDiv">
-    <input type="text" id="discordName" placeholder="Enter Discord Name">
-    <button id="saveDiscordBtn">Save</button>
-</div>
-
-<div id="quizDiv">
-    <div id="questionText"></div>
-    <div id="answers"></div>
-</div>
-
-<h2>Top 100 Players</h2>
-<ul id="leaderboard"></ul>
+<h1>Wallet Connect Test</h1>
+<button id="connectBtn">Connect Wallet</button>
+<div id="status">Not connected</div>
 
 <!-- Ethers.js CDN -->
 <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.umd.min.js"></script>
 
-<!-- Main script -->
-<script src="script.js"></script>
+<script>
+(async () => {
+    const connectBtn = document.getElementById("connectBtn");
+    const status = document.getElementById("status");
+    let provider, signer, account;
+
+    async function connectWallet() {
+        try {
+            if (!window.ethereum) throw new Error("MetaMask or compatible wallet not found!");
+
+            // Pick MetaMask if multiple providers exist
+            let ethereumProvider = window.ethereum;
+            if (Array.isArray(window.ethereum.providers)) {
+                ethereumProvider = window.ethereum.providers.find(p => p.isMetaMask) || window.ethereum.providers[0];
+            }
+
+            provider = new ethers.BrowserProvider(ethereumProvider); // Using ethers v6 safe constructor
+            await provider.send("eth_requestAccounts", []);
+            signer = await provider.getSigner();
+            account = await signer.getAddress();
+            const network = await provider.getNetwork();
+
+            status.innerText = `✅ Connected: ${account.slice(0,6)}...${account.slice(-4)} | Network: ${network.name}`;
+        } catch(err) {
+            console.error(err);
+            alert("Wallet connection failed: " + err.message);
+            status.innerText = "❌ Not connected";
+        }
+    }
+
+    connectBtn.onclick = connectWallet;
+})();
+</script>
 
 </body>
 </html>
