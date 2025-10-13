@@ -1,139 +1,136 @@
 window.addEventListener("DOMContentLoaded", () => {
-  
-// ======== CONTRACT SETTINGS ========
-    const contractAddress = "0xf8721539eaa06fb3b4fc62f4c1d20e4db13fd9d1"; // Replace with your contract
-    const abi = [
-        "function joinArena() payable",
-        "function updateScore(uint256 _score, string memory _discordName)",
-        "function topPlayers() view returns (string[] memory, uint256[] memory)"
-    ];
 
-    let provider, signer, contract;
-    let discordName = "";
-    let currentQuestion = 0;
-    let score = 0;
+const contractAddress = "0xf8721539eaa06fb3b4fc62f4c1d20e4db13fd9d1"; // Replace with your deployed contract
+const abi = [
+    "function joinArena() payable",
+    "function updateScore(uint256 _score, string calldata _discord)",
+    "function topPlayers() view returns (string[] memory, uint256[] memory)"
+];
 
-    // ======== QUIZ QUESTIONS ========
-    const questions = [
-        { q: "What does GoKite AI focus on?", a: ["Blockchain Gaming", "Cooking", "Music", "Sports"], correct: 0 },
-        { q: "Which token is used in Gokite Arena?", a: ["KITE", "ETH", "BTC", "USDT"], correct: 0 },
-        { q: "Who can join the Arena?", a: ["Everyone", "Only Admin", "Only Bots", "No one"], correct: 0 },
-        { q: "Quiz rewards points?", a: ["Yes", "No", "Sometimes", "Depends"], correct: 0 },
-        { q: "Where are the transactions recorded?", a: ["Blockchain", "Paper", "Local Server", "Nowhere"], correct: 0 },
-        { q: "Is GoKite AI free?", a: ["Yes", "No", "Partially", "Only Beta"], correct: 0 },
-        { q: "Can you see top players?", a: ["Yes", "No", "Sometimes", "Depends"], correct: 0 },
-        { q: "How many questions in weekly quiz?", a: ["10", "5", "20", "100"], correct: 0 },
-        { q: "What happens if answer is wrong?", a: ["-1 point", "Nothing", "+2 points", "Kick out"], correct: 0 },
-        { q: "Can you play with friends?", a: ["Yes", "No", "Only bots", "Depends"], correct: 0 }
-    ];
+let provider, signer, contract;
+let userDiscord = "";
+let score = 0;
+let currentQuestion = 0;
 
-    // ======== BUTTON ELEMENTS ========
-    const connectWalletBtn = document.getElementById("connectWalletBtn");
-    const joinArenaBtn = document.getElementById("joinArenaBtn");
-    const saveDiscordBtn = document.getElementById("saveDiscordBtn");
-    const discordDiv = document.getElementById("discordDiv");
-    const quizDiv = document.getElementById("quizDiv");
-    const questionText = document.getElementById("questionText");
-    const answersDiv = document.getElementById("answers");
-    const nextQuestionBtn = document.getElementById("nextQuestionBtn");
-    const leaderboardUl = document.getElementById("leaderboard");
+const quizQuestions = [
+    { q: "What is Kite AI?", a: ["Blockchain", "Game", "Crypto Bot", "All"], correct: 3 },
+    { q: "Which token is used?", a: ["ETH", "KITE", "BTC", "SOL"], correct: 1 },
+    { q: "What is arena for?", a: ["Quiz", "Battle", "Trade", "Mining"], correct: 0 },
+    { q: "Top leaderboard shows?", a: ["Wallet", "Discord", "Email", "Name"], correct: 1 },
+    { q: "How many questions per round?", a: ["5", "10", "20", "15"], correct: 1 },
+    { q: "Points for correct?", a: ["1", "2", "5", "0"], correct: 0 },
+    { q: "Points for wrong?", a: ["-1", "0", "1", "2"], correct: 0 },
+    { q: "Can we withdraw funds?", a: ["Yes", "No", "Sometimes", "All"], correct: 1 },
+    { q: "Wallet required?", a: ["Yes", "No", "Optional", "Later"], correct: 0 },
+    { q: "Quiz updates?", a: ["Weekly", "Daily", "Monthly", "Never"], correct: 0 }
+];
 
-    // ======== CONNECT WALLET ========
-    connectWalletBtn.onclick = async () => {
-        if (window.ethereum) {
-            provider = new ethers.providers.Web3Provider(window.ethereum);
-            await provider.send("eth_requestAccounts", []);
-            signer = provider.getSigner();
-            contract = new ethers.Contract(contractAddress, abi, signer);
-            alert("Wallet connected!");
-            joinArenaBtn.disabled = false;
-        } else {
-            alert("Install MetaMask or any EVM-compatible wallet!");
-        }
-    };
+// Buttons & divs
+const connectBtn = document.getElementById("connectWalletBtn");
+const joinBtn = document.getElementById("joinArenaBtn");
+const discordDiv = document.getElementById("discordDiv");
+const saveDiscordBtn = document.getElementById("saveDiscordBtn");
+const discordInput = document.getElementById("discordName");
+const quizDiv = document.getElementById("quizDiv");
+const questionText = document.getElementById("questionText");
+const answersDiv = document.getElementById("answers");
+const nextBtn = document.getElementById("nextQuestionBtn");
+const leaderboardUl = document.getElementById("leaderboard");
 
-    // ======== JOIN ARENA ========
-    joinArenaBtn.onclick = async () => {
-        try {
-            const tx = await contract.joinArena({ value: ethers.utils.parseEther("0.01") });
-            await tx.wait();
-            alert("Joined Arena!");
-            discordDiv.style.display = "block";
-        } catch (err) {
-            console.error(err);
-            alert("Error joining arena: " + err.message);
-        }
-    };
-
-    // ======== SAVE DISCORD NAME ========
-    saveDiscordBtn.onclick = () => {
-        const input = document.getElementById("discordName").value.trim();
-        if (input.length === 0) {
-            alert("Enter your Discord name!");
-            return;
-        }
-        discordName = input;
-        discordDiv.style.display = "none";
-        quizDiv.style.display = "block";
-        showQuestion();
-    };
-
-    // ======== SHOW QUESTION ========
-    function showQuestion() {
-        if (currentQuestion >= questions.length) {
-            finishQuiz();
-            return;
-        }
-
-        const q = questions[currentQuestion];
-        questionText.innerText = q.q;
-        answersDiv.innerHTML = "";
-
-        q.a.forEach((ans, i) => {
-            const btn = document.createElement("button");
-            btn.innerText = ans;
-            btn.onclick = () => {
-                if (i === q.correct) score++;
-                else score--;
-                nextQuestionBtn.disabled = false;
-            };
-            answersDiv.appendChild(btn);
-        });
+// Connect wallet
+connectBtn.onclick = async () => {
+    if (window.ethereum) {
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = provider.getSigner();
+        contract = new ethers.Contract(contractAddress, abi, signer);
+        connectBtn.disabled = true;
+        joinBtn.disabled = false;
+        alert("Wallet connected!");
+    } else {
+        alert("Install MetaMask or compatible wallet!");
     }
+};
 
-    // ======== NEXT QUESTION ========
-    nextQuestionBtn.onclick = () => {
-        currentQuestion++;
-        nextQuestionBtn.disabled = true;
-        showQuestion();
-    };
+// Join Arena
+joinBtn.onclick = async () => {
+    if (!contract) return alert("Wallet not connected!");
+    try {
+        const tx = await contract.joinArena({ value: ethers.utils.parseEther("0.01") });
+        await tx.wait();
+        joinBtn.disabled = true;
+        discordDiv.style.display = "block";
+        alert("You joined the arena!");
+    } catch(e) {
+        console.error(e);
+        alert("Failed to join arena: " + e.message);
+    }
+};
 
-    // ======== FINISH QUIZ ========
-    async function finishQuiz() {
-        quizDiv.style.display = "none";
+// Save Discord Name
+saveDiscordBtn.onclick = () => {
+    const name = discordInput.value.trim();
+    if (!name) return alert("Enter Discord name!");
+    userDiscord = name;
+    discordDiv.style.display = "none";
+    quizDiv.style.display = "block";
+    loadQuestion();
+};
+
+// Load question
+function loadQuestion() {
+    if (currentQuestion >= quizQuestions.length) {
+        finishQuiz();
+        return;
+    }
+    const q = quizQuestions[currentQuestion];
+    questionText.innerText = `Q${currentQuestion + 1}: ${q.q}`;
+    answersDiv.innerHTML = "";
+    q.a.forEach((ans, idx) => {
+        const btn = document.createElement("button");
+        btn.innerText = ans;
+        btn.onclick = () => selectAnswer(idx);
+        answersDiv.appendChild(btn);
+    });
+}
+
+// Handle answer
+function selectAnswer(idx) {
+    const q = quizQuestions[currentQuestion];
+    if (idx === q.correct) score += 1;
+    else score -= 1;
+    currentQuestion++;
+    loadQuestion();
+}
+
+// Finish quiz
+async function finishQuiz() {
+    quizDiv.style.display = "none";
+    try {
+        const tx = await contract.updateScore(score, userDiscord);
+        await tx.wait();
         alert(`Quiz finished! Your score: ${score}`);
-        try {
-            const tx = await contract.updateScore(score, discordName); // Save on blockchain
-            await tx.wait();
-        } catch (err) {
-            console.error(err);
-        }
         loadLeaderboard();
+    } catch(e) {
+        console.error(e);
+        alert("Error updating score: " + e.message);
     }
+}
 
-    // ======== LOAD LEADERBOARD (Top 100) ========
-    async function loadLeaderboard() {
-        try {
-            const [names, scores] = await contract.topPlayers();
-            leaderboardUl.innerHTML = "";
-            const maxPlayers = Math.min(names.length, 100);
-            for (let i = 0; i < maxPlayers; i++) {
-                const li = document.createElement("li");
-                li.innerText = `${i + 1}. ${names[i]} : ${scores[i]} points`;
-                leaderboardUl.appendChild(li);
-            }
-        } catch (err) {
-            console.error(err);
+// Load top 100 leaderboard
+async function loadLeaderboard() {
+    if (!contract) return;
+    try {
+        const [names, scores] = await contract.topPlayers();
+        leaderboardUl.innerHTML = "";
+        for (let i = 0; i < Math.min(names.length, 100); i++) {
+            const li = document.createElement("li");
+            li.innerText = `${names[i]} : ${scores[i]} pts`;
+            leaderboardUl.appendChild(li);
         }
+    } catch(e) {
+        console.error(e);
     }
+}
+
 });
