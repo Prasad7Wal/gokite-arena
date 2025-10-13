@@ -11,8 +11,6 @@ body{
   font-family:Inter,system-ui,Arial,sans-serif;
   background: linear-gradient(180deg,#021124 0%, #071526 100%);
   color:var(--white);
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
 }
 .container{
   max-width:920px;
