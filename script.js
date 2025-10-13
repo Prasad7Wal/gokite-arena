@@ -21,9 +21,8 @@ async function init() {
 
     provider = new ethers.providers.Web3Provider(window.ethereum);
 
-    // Request wallet connection
     try {
-        await provider.send("eth_requestAccounts", []);
+        await provider.send("eth_requestAccounts", []); // <-- this triggers MetaMask popup
     } catch (err) {
         alert("Please connect your MetaMask wallet!");
         return;
@@ -32,8 +31,9 @@ async function init() {
     signer = provider.getSigner();
     contract = new ethers.Contract(contractAddress, abi, signer);
 
-    loadLeaderboard(); // Load leaderboard on page load
+    loadLeaderboard();
 }
+
 
 window.addEventListener('load', init);
 
