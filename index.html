@@ -2,8 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Gokite Arena Game</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Gokite Arena Quiz</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; }
+    input, button { padding: 10px; margin: 5px 0; font-size: 16px; }
+    #quizContainer { display: none; margin-top: 20px; }
+    #leaderboard { margin-top: 20px; }
+  </style>
 </head>
 <body>
   <h1>Gokite Arena Game</h1>
@@ -12,15 +17,21 @@
     <button id="joinBtn">Join Arena (0.01 KITE)</button>
   </div>
 
-  <div>
-    <input type="number" id="score" placeholder="Enter your score">
-    <button id="updateBtn">Update Score</button>
+  <div id="discordContainer" style="display:none;">
+    <input type="text" id="discordName" placeholder="Enter your Discord name">
+    <button id="startQuizBtn">Start Quiz</button>
+  </div>
+
+  <div id="quizContainer">
+    <p id="questionText"></p>
+    <input type="text" id="answerInput" placeholder="Type your answer">
+    <button id="submitAnswerBtn">Submit Answer</button>
+    <p>Time left: <span id="timer">15</span>s</p>
   </div>
 
   <h2>Top 10 Players</h2>
   <ul id="leaderboard"></ul>
 
-  <!-- Load ethers.js first -->
   <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.umd.min.js"></script>
   <script src="script.js"></script>
 </body>
