@@ -2,7 +2,7 @@
 const contractAddress = "0xf8721539eaa06fb3b4fc62f4c1d20e4db13fd9d1"; // Replace with your contract
 const abi = [
     "function joinArena() payable",
-    "function updateScore(uint256 _score)",
+    "function updateScore(uint256 _score, string memory _discordName)",
     "function topPlayers() view returns (string[] memory, uint256[] memory)"
 ];
 
@@ -111,7 +111,7 @@ async function finishQuiz() {
     quizDiv.style.display = "none";
     alert(`Quiz finished! Your score: ${score}`);
     try {
-        const tx = await contract.updateScore(score); // Save on blockchain
+        const tx = await contract.updateScore(score, discordName); // Save on blockchain
         await tx.wait();
     } catch (err) {
         console.error(err);
@@ -124,7 +124,6 @@ async function loadLeaderboard() {
     try {
         const [names, scores] = await contract.topPlayers();
         leaderboardUl.innerHTML = "";
-
         const maxPlayers = Math.min(names.length, 100);
         for (let i = 0; i < maxPlayers; i++) {
             const li = document.createElement("li");
