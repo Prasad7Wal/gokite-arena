@@ -12,6 +12,7 @@ let contract;
 
 // ====================== INIT ======================
 async function init() {
+    console.log("Init started...");
     if (!window.ethereum) {
         alert("MetaMask is not installed! Please install it to play.");
         return;
@@ -20,23 +21,35 @@ async function init() {
     provider = new ethers.providers.Web3Provider(window.ethereum);
 
     try {
-        // Request account access — this triggers MetaMask popup
+        // Request account access — triggers MetaMask popup
         await provider.send("eth_requestAccounts", []);
+        console.log("MetaMask connected!");
     } catch (err) {
+        console.error("User rejected connection", err);
         alert("Please connect your MetaMask wallet!");
         return;
     }
 
-    signer = provider.getSigner();
-    contract = new ethers.Contract(contractAddress, abi, signer);
+    try {
+        signer = provider.getSigner();
+        console.log("Signer ready:", await signer.getAddress());
+        contract = new ethers.Contract(contractAddress, abi, signer);
+        console.log("Contract ready:", contract);
+    } catch (err) {
+        console.error("Error initializing contract", err);
+        alert("Failed to initialize contract. Check contract address and ABI.");
+        return;
+    }
 
-    // ✅ Enable buttons now that contract is ready
+    // Enable buttons only after everything is ready
     document.getElementById("join").disabled = false;
     document.getElementById("update").disabled = false;
+    console.log("Buttons enabled");
 
     // Load leaderboard immediately
     loadLeaderboard();
 }
+
 
 // Call init() after window loads
 window.addEventListener('load', init);
