@@ -1,8 +1,4 @@
-if (!window.ethers) {
-    alert("Ethers.js not loaded! Make sure the CDN script is included first.");
-}
-
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", async () => {
 
     const contractAddress = "0xf8721539eaa06fb3b4fc62f4c1d20e4db13fd9d1"; 
     const abi = [
@@ -40,22 +36,21 @@ window.addEventListener("DOMContentLoaded", () => {
     const answersDiv = document.getElementById("answers");
     const leaderboardUl = document.getElementById("leaderboard");
 
-    // Safety check
-    if (!connectBtn || !joinBtn || !discordDiv || !saveDiscordBtn || !discordInput || !quizDiv || !questionText || !answersDiv || !leaderboardUl) {
-        alert("Some DOM elements are missing!");
+    // Wait for ethers.js to load
+    if (!window.ethers) {
+        alert("Ethers.js not loaded! Make sure the CDN script is included before this script.");
         return;
     }
 
-    // Wait until window.ethereum is available (Brave/Nightly safe)
+    // Wait for wallet injection (works for Brave/Nightly)
     async function waitForEthereum(timeout = 5000) {
         const interval = 200;
-        const maxTries = Math.ceil(timeout / interval);
-        let tries = 0;
-        while (!window.ethereum && tries < maxTries) {
+        const attempts = Math.floor(timeout / interval);
+        for (let i = 0; i < attempts; i++) {
+            if (window.ethereum) return window.ethereum;
             await new Promise(r => setTimeout(r, interval));
-            tries++;
         }
-        return window.ethereum || null;
+        return null;
     }
 
     // Connect wallet
@@ -63,8 +58,6 @@ window.addEventListener("DOMContentLoaded", () => {
         try {
             const ethereum = await waitForEthereum();
             if (!ethereum) return alert("Please install MetaMask or compatible wallet!");
-
-            if (!window.ethers) return alert("Ethers.js not loaded!");
 
             provider = new ethers.providers.Web3Provider(ethereum, "any"); // "any" allows chain switching
             await provider.send("eth_requestAccounts", []);
@@ -105,7 +98,7 @@ window.addEventListener("DOMContentLoaded", () => {
         loadQuestion();
     };
 
-    // Quiz functions
+    // Load quiz question
     function loadQuestion() {
         if (currentQuestion >= quizQuestions.length) return finishQuiz();
         const q = quizQuestions[currentQuestion];
@@ -121,7 +114,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
     function selectAnswer(idx) {
         const q = quizQuestions[currentQuestion];
-        score += (idx === q.correct ? 1 : -1);
+        if (idx === q.correct) score += 1;
+        else score -= 1;
         currentQuestion++;
         loadQuestion();
     }
