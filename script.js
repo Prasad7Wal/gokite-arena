@@ -1,4 +1,4 @@
-const contractAddress = "PASTE_YOUR_CONTRACT_ADDRESS_HERE"; // Replace with your deployed contract
+const contractAddress = "0xf8721539eaa06fb3b4fc62f4c1d20e4db13fd9d1"; // Replace with your deployed contract
 const abi = [
     "function joinArena() payable",
     "function updateScore(uint256 _score)",
