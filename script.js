@@ -42,29 +42,26 @@ window.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-   // Connect wallet
-connectBtn.onclick = async () => {
-    try {
-        if (window.ethereum) {
-            // Correct usage: ethers object is global
-            provider = new ethers.providers.Web3Provider(window.ethereum);
-            await provider.send("eth_requestAccounts", []);
-            signer = provider.getSigner();
-            contract = new ethers.Contract(contractAddress, abi, signer);
+    // Connect wallet
+    connectBtn.onclick = async () => {
+        try {
+            if (window.ethereum && ethers) {
+                provider = new ethers.providers.Web3Provider(window.ethereum); // ✅ Correct
+                await provider.send("eth_requestAccounts", []);
+                signer = provider.getSigner();
+                contract = new ethers.Contract(contractAddress, abi, signer);
 
-            connectBtn.disabled = true;
-            joinBtn.disabled = false;
-            alert("Wallet connected!");
-        } else {
-            alert("Please install MetaMask or compatible wallet!");
+                connectBtn.disabled = true;
+                joinBtn.disabled = false;
+                alert("Wallet connected!");
+            } else {
+                alert("Please install MetaMask or compatible wallet!");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Wallet connection failed: " + e.message);
         }
-    } catch (e) {
-        console.error(e);
-        alert("Wallet connection failed: " + e.message);
-    }
-};
-
-
+    };
 
     // Join Arena
     joinBtn.onclick = async () => {
