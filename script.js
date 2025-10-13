@@ -1,12 +1,10 @@
-const contractAddress = "0xf8721539eaa06fb3b4fc62f4c1d20e4db13fd9d1";
+// ====================== CONFIG ======================
+const contractAddress = "0xf8721539eaa06fb3b4fc62f4c1d20e4db13fd9d1"; // Replace with your deployed contract
 const abi = [
     "function joinArena() payable",
     "function updateScore(uint256 _score)",
     "function topPlayers() view returns (address[] memory, uint256[] memory)"
 ];
-
-// rest of the script exactly as I wrote before
-
 
 let provider;
 let signer;
@@ -22,7 +20,7 @@ async function init() {
     provider = new ethers.providers.Web3Provider(window.ethereum);
 
     try {
-        await provider.send("eth_requestAccounts", []); // <-- this triggers MetaMask popup
+        await provider.send("eth_requestAccounts", []); // triggers MetaMask popup
     } catch (err) {
         alert("Please connect your MetaMask wallet!");
         return;
@@ -31,9 +29,8 @@ async function init() {
     signer = provider.getSigner();
     contract = new ethers.Contract(contractAddress, abi, signer);
 
-    loadLeaderboard();
+    loadLeaderboard(); // Load leaderboard immediately
 }
-
 
 window.addEventListener('load', init);
 
