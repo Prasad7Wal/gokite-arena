@@ -14,7 +14,7 @@
     "function updateScore(uint256 _score, string calldata _discord)",
     "function topPlayers() view returns (string[] memory, uint256[] memory)"
   ];
-
+ 
   // ---------- DOM ----------
   const statusEl = document.getElementById("status");
   const connectBtn = document.getElementById("connectBtn");
