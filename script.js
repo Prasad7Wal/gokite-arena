@@ -247,26 +247,28 @@ if (!signer) {
   }
 
   // ---------- Join arena ----------
-  async function joinArena() {
-    if (!contract) {
-      alert("Connect wallet first.");
-      return;
+async function joinArena() {
+  try {
+    if (!window.signer || !window.contract) {
+      throw new Error("Wallet not connected properly");
     }
-    try {
-      setStatus("Joining arena...");
-      const value = (window.ethers && window.ethers.parseEther) ? window.ethers.parseEther("0.01") : "0x2386f26fc10000";
-      const tx = await contract.joinArena({ value });
-      setStatus("Waiting confirmation...");
-      await tx.wait();
-      setStatus("Joined arena! Enter Discord name to start.");
-      discordSection.classList.remove("hidden");
-      joinBtn.disabled = true;
-    } catch (e) {
-      console.error("joinArena failed", e);
-      alert("Join failed: " + (e && e.message ? e.message : e));
-      setStatus("Join failed");
-    }
+
+    document.getElementById("status").innerText = "Joining arena...";
+
+    // Call your contract function safely
+    const tx = await window.contract.connect(window.signer).joinArena({
+      value: ethers.parseEther("0.01"),
+    });
+
+    await tx.wait();
+
+    document.getElementById("status").innerText = "Joined arena successfully!";
+  } catch (err) {
+    console.error("joinArena failed", err);
+    document.getElementById("status").innerText = "Join failed: " + err.message;
   }
+}
+
 
   // ---------- QUIZ FLOW ----------
   function startQuiz() {
@@ -329,31 +331,23 @@ if (!signer) {
   }
 
   // ---------- LEADERBOARD ----------
-  async function loadLeaderboard() {
-    if (!contract) { setStatus("No contract"); return; }
-    setStatus("Loading leaderboard...");
-    try {
-      const callRes = await (contract.connect
-  ? contract.connect(ethersProvider).topPlayers()
-  : contract.topPlayers());
-const res = callRes;
-
-      if (!res || !Array.isArray(res)) { setStatus("Unexpected leaderboard data"); return; }
-      const [names, scores] = res;
-      leaderboardList.innerHTML = "";
-      const total = Math.min(names.length || 0, 100);
-      for (let i = 0; i < total; i++) {
-        const li = document.createElement("li");
-        li.innerText = `${i+1}. ${names[i]} — ${scores[i]} pts`;
-        leaderboardList.appendChild(li);
-      }
-      leaderboardSection.classList.remove("hidden");
-      setStatus("Leaderboard loaded");
-    } catch (e) {
-      console.error("loadLeaderboard error", e);
-      setStatus("Leaderboard failed");
+async function loadLeaderboard() {
+  try {
+    if (!window.contract) throw new Error("Contract not initialized");
+    
+    const result = await window.contract.topPlayers();
+    if (!Array.isArray(result) || result.length === 0) {
+      throw new Error("No leaderboard data found");
     }
+
+    console.log("Leaderboard:", result);
+    document.getElementById("status").innerText = "Leaderboard loaded";
+  } catch (err) {
+    console.error("loadLeaderboard error", err);
+    document.getElementById("status").innerText = "Leaderboard load failed: " + err.message;
   }
+}
+
 
   // ---------- WIRING ----------
   connectBtn.addEventListener("click", connectWallet);
