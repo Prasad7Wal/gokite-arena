@@ -2,49 +2,52 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Go Kite AI X Prasad_713 Quiz</title>
+  <title>GoKite AI X Prasad_713 Arena</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
 </head>
 <body>
-  <header>
-    <h1>Go Kite AI X Prasad_713</h1>
-  </header>
+  <div class="container">
+    <h1>🏆 GoKite AI X Prasad_713 Arena</h1>
+    <p id="walletStatus">Wallet not connected</p>
 
-  <main>
+    <!-- Wallet connect -->
     <div id="wallet-container">
       <button id="connectWallet">Connect Wallet</button>
-      <p id="walletStatus"></p>
     </div>
 
+    <!-- Discord name -->
     <div id="discord-container" class="hidden">
       <input type="text" id="discordName" placeholder="Enter Discord Name">
-      <button id="payFeeBtn">Pay 0.1 GoKite & Join Quiz</button>
+      <button id="payFeeBtn">Join Era</button>
     </div>
 
+    <!-- Quiz container -->
     <div id="quiz-container" class="hidden">
       <div id="quiz"></div>
-      <div id="quiz-nav">
-        <button id="prevBtn">Previous</button>
-        <button id="nextBtn">Next</button>
-        <button id="submitQuiz">Submit Quiz</button>
+      <button id="prevBtn">⬅ Previous</button>
+      <button id="nextBtn">Next ➡</button>
+      <button id="submitQuiz" class="hidden">Submit Quiz</button>
+    </div>
+
+    <!-- Leaderboard -->
+    <div id="leaderboard-container" class="hidden">
+      <h2>🏅 Leaderboard (Top 100)</h2>
+      <ul id="leaderboard"></ul>
+    </div>
+
+    <!-- Admin -->
+    <div id="admin-container" class="hidden">
+      <input type="password" id="adminPass" placeholder="Enter Admin Password">
+      <button id="adminLogin">Login</button>
+      <div id="adminPanel" class="hidden">
+        <h3>Admin Panel</h3>
+        <button id="updateQuestions">Update Weekly Questions</button>
+        <button id="modifyPoints">Modify User Points</button>
       </div>
     </div>
+  </div>
 
-    <div id="leaderboard-container" class="hidden">
-      <h2>Leaderboard - Top 100</h2>
-      <ol id="leaderboard"></ol>
-    </div>
-  </main>
-
-  <footer>
-    <div id="admin-login">
-      <input type="password" id="adminPassword" placeholder="Enter Admin Password">
-      <button id="adminLoginBtn">Admin Login</button>
-    </div>
-  </footer>
-
-  <script src="script.js"></script>
+  <script src="script.js" defer></script>
 </body>
 </html>
