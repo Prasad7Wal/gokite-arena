@@ -1,53 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>GoKite AI X Prasad_713 Arena</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GoKite Quiz | Attempt 1</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
-    <h1>🏆 GoKite AI X Prasad_713 Arena</h1>
-    <p id="walletStatus">Wallet not connected</p>
+    <h1>🚀 GoKite Blockchain Quiz</h1>
+    <p class="attempt">HTML Attempt 1 | JS Attempt 1 | CSS Attempt 1</p>
 
-    <!-- Wallet connect -->
-    <div id="wallet-container">
-      <button id="connectWallet">Connect Wallet</button>
-    </div>
+    <button id="connectWalletBtn">🔗 Connect Wallet</button>
 
-    <!-- Discord name -->
-    <div id="discord-container" class="hidden">
-      <input type="text" id="discordName" placeholder="Enter Discord Name">
-      <button id="payFeeBtn">Join Era</button>
-    </div>
+    <div id="walletAddress" class="info"></div>
 
-    <!-- Quiz container -->
-    <div id="quiz-container" class="hidden">
-      <div id="quiz"></div>
-      <button id="prevBtn">⬅ Previous</button>
-      <button id="nextBtn">Next ➡</button>
-      <button id="submitQuiz" class="hidden">Submit Quiz</button>
-    </div>
+    <button id="joinQuizBtn" class="hidden">🎮 Join Quiz</button>
 
-    <!-- Leaderboard -->
-    <div id="leaderboard-container" class="hidden">
-      <h2>🏅 Leaderboard (Top 100)</h2>
-      <ul id="leaderboard"></ul>
-    </div>
-
-    <!-- Admin -->
-    <div id="admin-container" class="hidden">
-      <input type="password" id="adminPass" placeholder="Enter Admin Password">
-      <button id="adminLogin">Login</button>
-      <div id="adminPanel" class="hidden">
-        <h3>Admin Panel</h3>
-        <button id="updateQuestions">Update Weekly Questions</button>
-        <button id="modifyPoints">Modify User Points</button>
-      </div>
-    </div>
+    <div id="statusMessage" class="info"></div>
   </div>
 
-  <script src="script.js" defer></script>
+  <!-- ✅ Load Ethers.js before your script -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
