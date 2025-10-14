@@ -136,10 +136,16 @@ async function joinArena(){
       if(!confirm(`Entry fee ${feeEth} KITE. Pay and join?`)){ setStatus("Join cancelled"); return; }
     }
 
-  setStatus("⏳ Sending join transaction (with contract entry fee)...");
+ setStatus("⏳ Sending join transaction (with contract entry fee)...");
 const fee = await contract.entryFee(); // get fee dynamically
-const tx = await contract.submitScore(0, "joining", { value: fee, gasLimit: 300000 });
+
+// estimate gas for safety
+const gasEstimate = await contract.estimateGas.submitScore(1, "joining", { value: fee });
+
+// send tx with estimated gas and exact fee
+const tx = await contract.submitScore(1, "joining", { value: fee, gasLimit: gasEstimate });
 await tx.wait();
+
 setStatus("✅ Joined arena — enter Discord name");
 discordArea.classList.remove("hidden");
 joinBtn.disabled = true;
