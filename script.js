@@ -3,10 +3,9 @@ let signer;
 let userAddress;
 let contract;
 
-// Your contract info
+// Contract info
 const contractAddress = "0xf8721539eaa06fb3b4fc62f4c1d20e4db13fd9d1";
 const contractABI = [
-  // Minimal ABI for demonstration
   "function submitScore(uint256 score, string discordName) public",
   "function getLeaderboard() public view returns (string[] memory names, uint256[] memory scores)"
 ];
@@ -25,9 +24,8 @@ const quizQuestions = [
 ];
 
 let currentSlide = 0;
-let quizAnswers = [];
 
-// Wallet connect
+// --- Wallet Connect ---
 document.getElementById("connectWallet").addEventListener("click", async () => {
   if (window.ethereum) {
     try {
@@ -41,23 +39,23 @@ document.getElementById("connectWallet").addEventListener("click", async () => {
       contract = new ethers.Contract(contractAddress, contractABI, signer);
     } catch (err) {
       console.error(err);
-      alert("Wallet connection failed");
+      alert("Wallet connection failed. Make sure you are on the correct network.");
     }
   } else {
     alert("No Web3 wallet detected!");
   }
 });
 
-// Start quiz
+// --- Start Quiz ---
 document.getElementById("startQuiz").addEventListener("click", () => {
-  const discord = document.getElementById("discordName").value;
-  if (!discord) return alert("Enter Discord Name");
+  const discord = document.getElementById("discordName").value.trim();
+  if (!discord) return alert("Enter your Discord name!");
   document.getElementById("discord-container").classList.add("hidden");
   document.getElementById("quiz-container").classList.remove("hidden");
   showSlide(0);
 });
 
-// Generate quiz slides
+// --- Generate Quiz Slides ---
 const quizDiv = document.getElementById("quiz");
 quizQuestions.forEach((q, i) => {
   const slide = document.createElement("div");
@@ -70,6 +68,7 @@ quizQuestions.forEach((q, i) => {
   quizDiv.appendChild(slide);
 });
 
+// --- Show Slide ---
 function showSlide(n) {
   const slides = document.querySelectorAll(".slide");
   slides.forEach(s => s.classList.remove("active-slide"));
@@ -84,7 +83,7 @@ function showSlide(n) {
 document.getElementById("prevBtn").addEventListener("click", () => showSlide(currentSlide - 1));
 document.getElementById("nextBtn").addEventListener("click", () => showSlide(currentSlide + 1));
 
-// Submit quiz
+// --- Submit Quiz ---
 document.getElementById("submitQuiz").addEventListener("click", async () => {
   let score = 0;
   quizQuestions.forEach((q, i) => {
@@ -92,22 +91,32 @@ document.getElementById("submitQuiz").addEventListener("click", async () => {
     if (selected && parseInt(selected.value) === q.correct) score++;
   });
 
-  const discord = document.getElementById("discordName").value;
+  const discord = document.getElementById("discordName").value.trim();
+  if (!discord) return alert("Discord name missing!");
+
   try {
-    const tx = await contract.submitScore(score, discord);
+    // Gas estimate with fallback
+    let tx;
+    try {
+      tx = await contract.submitScore(score, discord);
+    } catch (err) {
+      // fallback with manual gas limit
+      tx = await contract.submitScore(score, discord, { gasLimit: 500000 });
+    }
     await tx.wait();
     alert("Quiz submitted successfully!");
-    loadLeaderboard();
     document.getElementById("quiz-container").classList.add("hidden");
     document.getElementById("leaderboard-container").classList.remove("hidden");
+    loadLeaderboard();
   } catch (err) {
     console.error(err);
-    alert("Error submitting quiz to blockchain");
+    alert("Blockchain submission failed. Make sure your contract supports the function and testnet balance is enough.");
   }
 });
 
-// Load leaderboard
+// --- Load Leaderboard ---
 async function loadLeaderboard() {
+  if (!contract) return;
   try {
     const [names, scores] = await contract.getLeaderboard();
     const lb = document.getElementById("leaderboard");
@@ -119,15 +128,16 @@ async function loadLeaderboard() {
     }
   } catch (err) {
     console.error(err);
+    alert("Failed to load leaderboard from blockchain.");
   }
 }
 
-// Admin login
+// --- Admin Login ---
 document.getElementById("adminLoginBtn").addEventListener("click", () => {
   const pwd = document.getElementById("adminPassword").value;
   if (pwd === "YOUR_ADMIN_PASSWORD") {
     alert("Admin logged in! You can now manage questions and points.");
-    // Implement admin controls here
+    // Placeholder: implement admin controls
   } else {
     alert("Incorrect password");
   }
