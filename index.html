@@ -1,72 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>GoKite Arena | Attempt Tracker</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GoKite Quiz dApp - Attempt 1</title>
+  <style>
+    body {
+      background: linear-gradient(to bottom right, #0f172a, #1e293b);
+      color: white;
+      font-family: 'Poppins', sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      color: #38bdf8;
+      margin-bottom: 20px;
+    }
+    .hidden { display: none; }
+    .slide { display: none; }
+    .active-slide { display: block; }
+    button {
+      background: #38bdf8;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 10px;
+      transition: 0.3s;
+    }
+    button:hover { background: #0ea5e9; }
 
-  <!-- IMPORTANT: increment CSS_ATTEMPT in style.css when updating CSS -->
-  <link rel="stylesheet" href="style.css?v=1.0.1" />
+    .attempt-box {
+      margin-top: 25px;
+      padding: 10px;
+      border: 2px solid #38bdf8;
+      border-radius: 10px;
+      display: inline-block;
+    }
+  </style>
 </head>
 <body>
+  <h1>🚀 GoKite Quiz dApp</h1>
 
-  <div class="container">
-    <header>
-      <h1>GoKite AI X Prasad_713 — Arena</h1>
-      <p class="sub">Blockchain Quiz — testnet friendly</p>
-    </header>
-
-    <section class="attempts">
-      <div>HTML Attempt: <strong id="htmlAttempt">1</strong></div>
-      <div>CSS Attempt: <strong id="cssAttempt">1</strong></div>
-      <div>JS Attempt: <strong id="jsAttempt">1</strong></div>
-    </section>
-
-    <section id="ui">
-      <div id="wallet-area">
-        <button id="connectWalletBtn">🔗 Connect Wallet</button>
-        <div id="walletStatus" class="info">Not connected</div>
-      </div>
-
-      <div id="join-area" class="hidden">
-        <input id="discordName" placeholder="Enter Discord name (visible on leaderboard)" />
-        <button id="joinQuizBtn">🎮 Join Era (pay entry fee)</button>
-        <div id="joinStatus" class="info"></div>
-      </div>
-
-      <div id="quiz-area" class="hidden">
-        <div id="quiz"></div>
-        <div class="quiz-controls">
-          <button id="prevBtn" class="hidden">⬅ Prev</button>
-          <button id="nextBtn" class="hidden">Next ➡</button>
-          <button id="submitQuizBtn" class="hidden">Submit Quiz</button>
-        </div>
-      </div>
-
-      <div id="leaderboard-area" class="hidden">
-        <h2>🏅 Leaderboard (Top 100)</h2>
-        <ol id="leaderboard"></ol>
-      </div>
-
-      <div id="admin-area" class="admin">
-        <input id="adminPass" type="password" placeholder="Admin password" />
-        <button id="adminLoginBtn">Admin Login</button>
-        <div id="adminPanel" class="hidden">
-          <button id="updateQuestionsBtn">Update Weekly Questions</button>
-          <button id="manualAdjustBtn">Manual Adjust Points</button>
-        </div>
-      </div>
-    </section>
-
-    <footer>
-      <small>UI theme: beige / tan / black — GoKite AI testnet</small>
-    </footer>
+  <div id="wallet-container">
+    <button id="connectWallet">Connect Wallet</button>
+    <p id="walletStatus"></p>
   </div>
 
-  <!-- Load ethers.js BEFORE your script -->
+  <div id="discord-container" class="hidden">
+    <input id="discordName" placeholder="Enter Discord Username" />
+    <button id="payFeeBtn">Join Quiz (Pay Fee)</button>
+  </div>
+
+  <div id="quiz-container" class="hidden">
+    <div id="quiz"></div>
+    <button id="prevBtn">Previous</button>
+    <button id="nextBtn">Next</button>
+    <button id="submitQuiz">Submit</button>
+  </div>
+
+  <div id="leaderboard-container" class="hidden">
+    <h2>🏆 Leaderboard</h2>
+    <ul id="leaderboard"></ul>
+  </div>
+
+  <!-- ✅ Attempt Status Box -->
+  <div class="attempt-box">
+    <p>🧩 HTML Attempt: <b id="htmlAttempt">1</b></p>
+    <p>🎨 CSS Attempt: <b id="cssAttempt">1</b></p>
+    <p>⚙️ JS Attempt: <b id="jsAttempt">1</b></p>
+  </div>
+
+  <!-- ✅ Load Ethers.js from CDN (MUST COME BEFORE script.js) -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
 
-  <!-- app script (increment JS attempt in header when you update) -->
-  <script src="script.js?v=1.0.1"></script>
+  <!-- ✅ Main Script -->
+  <script src="script.js"></script>
 </body>
 </html>
