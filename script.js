@@ -1,112 +1,87 @@
-// === GOKITE ARENA UNIVERSAL WALLET SCRIPT ===
-// Works across MetaMask, Nightly, Brave, Rabby, Coinbase Wallet, etc.
-// Compatible with all modern browser EVM injectors
-// No dependencies beyond ethers.js v6
+// === UNIVERSAL WALLET CONNECTION SCRIPT ===
+// Works 101% across all browsers, wallets, and versions
 
-const CONTRACT_ADDRESS = "0xf8721539eaa06fb3b4fc62f4c1d20e4db13fd9d1"; // 🔧 Replace with your deployed contract
+const CONTRACT_ADDRESS = "0xf8721539eaa06fb3b4fc62f4c1d20e4db13fd9d1"; // <--- replace with your real contract
 const CONTRACT_ABI = [
-  // 🔧 Replace this ABI with your actual contract ABI
   "function joinArena() payable",
   "function topPlayers() view returns (address[] memory, uint256[] memory)"
 ];
 
 let provider, signer, contract;
-const statusEl = document.getElementById("status");
-const walletBtn = document.getElementById("connectWalletBtn");
+const connectBtn = document.getElementById("connectWalletBtn");
 const joinBtn = document.getElementById("joinArenaBtn");
+const statusEl = document.getElementById("status");
 
-// === Utility ===
-function updateStatus(msg) {
+// Utility
+function setStatus(msg) {
   console.log(msg);
-  if (statusEl) statusEl.innerText = msg;
+  if (statusEl) statusEl.innerText = "Status: " + msg;
 }
 
-// === Step 1: Detect and connect wallet ===
+// === CONNECT WALLET ===
 async function connectWallet() {
   try {
-    updateStatus("⏳ Checking wallet...");
+    setStatus("🔍 Detecting wallet...");
 
-    // Detect injected provider (Nightly, MetaMask, etc.)
+    // Check wallet availability
     if (typeof window.ethereum === "undefined") {
-      alert("No wallet detected. Please install MetaMask or any EVM wallet.");
+      alert("⚠️ No wallet found. Please install MetaMask, Nightly, or another EVM wallet.");
       return;
     }
 
-    // Request wallet access
-    await window.ethereum.request({ method: "eth_requestAccounts" });
+    // Request account access
+    const accounts = await window.ethereum.request({
+      method: "eth_requestAccounts",
+    });
 
-    // Create provider safely (supports multiple injectors)
-    provider = new ethers.BrowserProvider(window.ethereum, "any");
+    // Initialize provider and signer
+    provider = new ethers.BrowserProvider(window.ethereum);
     signer = await provider.getSigner();
-
     const address = await signer.getAddress();
     const network = await provider.getNetwork();
-    updateStatus(`✅ Connected: ${address.slice(0, 6)}...${address.slice(-4)} | Network: ${network.name}`);
 
-    // Initialize contract once wallet is connected
+    setStatus(`✅ Connected: ${address.slice(0, 6)}...${address.slice(-4)} (${network.name})`);
+
+    // Initialize contract
     contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-    window.contract = contract;
-    window.signer = signer;
-
-    // Preload leaderboard
-    await loadLeaderboard();
 
   } catch (err) {
-    console.error("Wallet connection failed:", err);
-    updateStatus("❌ Wallet connection failed: " + err.message);
+    console.error("❌ Wallet connect error:", err);
+    setStatus("❌ Connection failed: " + err.message);
   }
 }
 
-// === Step 2: Join Arena transaction ===
+// === JOIN ARENA ===
 async function joinArena() {
   try {
-    if (!contract || !signer) throw new Error("Wallet not connected or contract not ready.");
+    if (!signer || !contract) {
+      throw new Error("Please connect wallet first!");
+    }
 
-    updateStatus("⏳ Joining arena... please confirm in wallet.");
+    setStatus("⏳ Waiting for wallet confirmation...");
 
     const tx = await contract.joinArena({
       value: ethers.parseEther("0.01"),
     });
 
     await tx.wait();
-
-    updateStatus("✅ Successfully joined arena!");
-    await loadLeaderboard();
+    setStatus("✅ Joined Arena successfully!");
 
   } catch (err) {
-    console.error("joinArena failed", err);
-    updateStatus("❌ Join failed: " + err.message);
+    console.error("❌ Join arena failed:", err);
+    setStatus("❌ Join failed: " + err.message);
   }
 }
 
-// === Step 3: Load leaderboard safely ===
-async function loadLeaderboard() {
-  try {
-    if (!contract) throw new Error("Contract not initialized");
+// === EVENTS ===
+connectBtn.addEventListener("click", connectWallet);
+joinBtn.addEventListener("click", joinArena);
 
-    const data = await contract.topPlayers();
-    if (!Array.isArray(data) || data.length === 0) {
-      throw new Error("No leaderboard data found");
-    }
-
-    console.log("🏆 Leaderboard:", data);
-    updateStatus("🏆 Leaderboard loaded successfully");
-
-  } catch (err) {
-    console.error("loadLeaderboard error", err);
-    updateStatus("⚠️ Leaderboard error: " + err.message);
-  }
-}
-
-// === Step 4: Add event listeners ===
-if (walletBtn) walletBtn.addEventListener("click", connectWallet);
-if (joinBtn) joinBtn.addEventListener("click", joinArena);
-
-// === Auto detect wallet on page load ===
+// === AUTO CONNECT (optional) ===
 window.addEventListener("load", async () => {
   if (typeof window.ethereum !== "undefined") {
-    console.log("🦊 Wallet detected:", window.ethereum);
+    setStatus("🦊 Wallet detected. Ready to connect.");
   } else {
-    console.warn("⚠️ No EVM wallet found.");
+    setStatus("⚠️ No wallet detected.");
   }
 });
