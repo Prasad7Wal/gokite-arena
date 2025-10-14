@@ -8,7 +8,7 @@ window.addEventListener('load', async () => {
   window.signer = window.provider.getSigner();
   console.log('Ethers loaded successfully');
 });
-
+ 
 // ---------------- CONFIG ----------------
 const CONTRACT_ADDRESS = "0x2779529ca08560a7b977a92879bdd141b2e35ae9";
 const CONTRACT_ABI = [
