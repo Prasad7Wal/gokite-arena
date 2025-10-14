@@ -45,7 +45,7 @@ document.getElementById("connectWallet").addEventListener("click", async () => {
 });
 
 // Pay entry fee and start quiz
-document.getElementById("payFeeBtn").addEventListener("click", async () => {
+document.getElementById("startQuiz").addEventListener("click", async () => {
   const discord = document.getElementById("discordName").value;
   if (!discord) return alert("Enter Discord Name");
 
@@ -70,10 +70,24 @@ quizQuestions.forEach((q, i) => {
   slide.classList.add("slide");
   let optionsHTML = "";
   q.options.forEach((opt, idx) => {
-    optionsHTML += `<label><input type="radio" name="q${i}" value="${idx}"> ${opt}</label><br>`;
+    optionsHTML += `<button class="quiz-btn" data-q="${i}" data-val="${idx}">${opt}</button>`;
   });
   slide.innerHTML = `<p>${q.q}</p>${optionsHTML}`;
   quizDiv.appendChild(slide);
+});
+
+// Button click for quiz answer
+document.addEventListener("click", (e) => {
+  if (e.target.classList.contains("quiz-btn")) {
+    const qIndex = parseInt(e.target.dataset.q);
+    const val = parseInt(e.target.dataset.val);
+    quizQuestions[qIndex].userAnswer = val;
+
+    // Highlight selected button
+    const buttons = e.target.parentNode.querySelectorAll(".quiz-btn");
+    buttons.forEach(b => b.classList.remove("selected"));
+    e.target.classList.add("selected");
+  }
 });
 
 function showSlide(n) {
@@ -92,9 +106,8 @@ document.getElementById("nextBtn").addEventListener("click", () => showSlide(cur
 // Submit quiz answers to blockchain
 document.getElementById("submitQuiz").addEventListener("click", async () => {
   let score = 0;
-  quizQuestions.forEach((q, i) => {
-    const selected = document.querySelector(`input[name=q${i}]:checked`);
-    if (selected && parseInt(selected.value) === q.correct) score++;
+  quizQuestions.forEach(q => {
+    if (q.userAnswer === q.correct) score++;
   });
 
   const discord = document.getElementById("discordName").value;
@@ -112,4 +125,29 @@ document.getElementById("submitQuiz").addEventListener("click", async () => {
 });
 
 // Load leaderboard
-async function
+async function loadLeaderboard() {
+  try {
+    const [names, scores] = await contract.getLeaderboard();
+    const lb = document.getElementById("leaderboard");
+    lb.innerHTML = "";
+    for (let i = 0; i < names.length; i++) {
+      const li = document.createElement("li");
+      li.innerText = `${names[i]} - ${scores[i]} points`;
+      lb.appendChild(li);
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Failed to load leaderboard");
+  }
+}
+
+// Admin login
+document.getElementById("adminLoginBtn").addEventListener("click", () => {
+  const pwd = document.getElementById("adminPassword").value;
+  if (pwd === "YOUR_ADMIN_PASSWORD") {
+    alert("Admin logged in! You can now manage questions and points.");
+    // Implement admin controls here
+  } else {
+    alert("Incorrect password");
+  }
+});
