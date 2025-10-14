@@ -1,46 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>GoKite Arena — Robust DApp</title>
-
-  <link rel="stylesheet" href="style.css" />
-
-  <!-- ethers v6 UMD (needed by script.js) -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GoKite Arena - Wallet Connect</title>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.15.0/dist/ethers.umd.min.js"></script>
+  <style>
+    body {
+      background: radial-gradient(circle, #090979, #020024);
+      color: white;
+      font-family: 'Poppins', sans-serif;
+      text-align: center;
+      height: 100vh;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+    }
+    button {
+      background: linear-gradient(90deg, #ff6a00, #ee0979);
+      border: none;
+      color: white;
+      padding: 12px 28px;
+      margin: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: 0.3s;
+    }
+    button:hover {
+      opacity: 0.8;
+    }
+    #status {
+      margin-top: 20px;
+      font-size: 1.1rem;
+      color: #00ffcc;
+    }
+  </style>
 </head>
-<body> 
-  <main class="container">
-    <h1>🏆 GoKite Arena</h1>
+<body>
+  <h1>⚔️ GoKite Arena</h1>
+  <div>
+    <button id="connectWalletBtn">Connect Wallet</button>
+    <button id="joinArenaBtn">Join Arena (0.01 ETH)</button>
+  </div>
+  <div id="status">Status: Not connected</div>
 
-    <div id="status" class="status">Status: ready</div>
-
-    <div class="controls">
-      <button id="connectBtn">Connect Wallet</button>
-      <button id="joinBtn" disabled>Join Arena (0.01 KITE)</button>
-    </div>
-
-    <section id="discordSection" class="panel hidden">
-      <h3>Enter Discord Name</h3>
-      <input id="discordInput" placeholder="Discord#1234 or handle" />
-      <button id="startQuizBtn">Start Quiz</button>
-    </section>
-
-    <section id="quizSection" class="panel hidden">
-      <h3 id="questionTitle">Question</h3>
-      <div id="answers"></div>
-    </section>
-
-    <section id="leaderboardSection" class="panel hidden">
-      <h3>Top Players (up to 100)</h3>
-      <ol id="leaderboard"></ol>
-    </section>
-
-    <footer class="footer">Built for GoKite AI — Testnet friendly</footer>
-  </main>
-
-  <!-- main app script -->
-  <script src="script.js" defer></script>
+  <script src="./script.js"></script>
 </body>
 </html>
