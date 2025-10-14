@@ -241,7 +241,8 @@ submitBtn.addEventListener("click", async ()=>{
   try{
     setStatus("⏳ Submitting score on-chain...");
     // Some contracts require value or not; here we send zero value for submission
-   const tx = await contract.submit(score, userDiscord, { value: ethers.utils.parseEther("0.001") });
+   const tx = await contract.submitScore(score, userDiscord, { value: ethers.utils.parseEther("0.001") });
+
 
     await tx.wait();
     setStatus("✅ Score submitted!");
