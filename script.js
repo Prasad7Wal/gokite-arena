@@ -1,4 +1,3 @@
-// Wait until everything is loaded
 window.addEventListener('DOMContentLoaded', () => {
   const connectBtn = document.getElementById('connectBtn');
   const walletStatus = document.getElementById('walletStatus');
@@ -7,38 +6,44 @@ window.addEventListener('DOMContentLoaded', () => {
   let provider;
   let signer;
 
-  // ✅ Wait until any wallet injects `window.ethereum`
-  async function waitForEthereum(timeout = 6000) {
+  // ✅ Wait for wallet injection (fixes first-click problem)
+  async function waitForEthereum(timeout = 5000) {
     return new Promise((resolve, reject) => {
       if (window.ethereum) return resolve(window.ethereum);
 
-      const check = setInterval(() => {
+      const interval = setInterval(() => {
         if (window.ethereum) {
-          clearInterval(check);
+          clearInterval(interval);
           clearTimeout(timer);
           resolve(window.ethereum);
         }
-      }, 200);
+      }, 100);
 
       const timer = setTimeout(() => {
-        clearInterval(check);
-        reject(new Error("Ethereum provider not found"));
+        clearInterval(interval);
+        reject(new Error("No wallet detected"));
       }, timeout);
     });
   }
 
-  // ✅ Connect wallet safely
+  // ✅ Connect wallet
   async function connectWallet() {
     try {
-      walletStatus.textContent = "⏳ Connecting...";
-      const eth = await waitForEthereum().catch(() => null);
+      walletStatus.textContent = "⏳ Detecting wallet...";
+      const eth = await waitForEthereum();
 
       if (!eth) {
-        walletStatus.textContent = "❌ No wallet detected. Install MetaMask or Nightly.";
+        walletStatus.textContent = "❌ No wallet found. Install MetaMask or Nightly.";
         return;
       }
 
-      provider = new ethers.providers.Web3Provider(eth);
+      // Handle multiple providers (MetaMask + others)
+      const providerObj = Array.isArray(eth.providers)
+        ? eth.providers.find(p => p.isMetaMask) || eth.providers[0]
+        : eth;
+
+      provider = new ethers.providers.Web3Provider(providerObj, "any");
+
       await provider.send("eth_requestAccounts", []);
       signer = provider.getSigner();
 
@@ -51,18 +56,16 @@ window.addEventListener('DOMContentLoaded', () => {
         <b>Network:</b> ${network.name} (${network.chainId})
       `;
 
-      console.log("Connected wallet:", address);
+      connectBtn.disabled = true;
+
+      // 🧩 Add listeners for dynamic updates
+      providerObj.on("accountsChanged", () => window.location.reload());
+      providerObj.on("chainChanged", () => window.location.reload());
     } catch (err) {
-      console.error("Wallet connection failed:", err);
-      walletStatus.textContent = "❌ Connection failed. See console.";
+      console.error("❌ Wallet connection failed:", err);
+      walletStatus.textContent = "❌ Failed: " + (err.message || "Unknown error");
     }
   }
 
-  connectBtn.addEventListener('click', connectWallet);
-
-  // ✅ React to wallet events
-  if (window.ethereum) {
-    window.ethereum.on('accountsChanged', () => window.location.reload());
-    window.ethereum.on('chainChanged', () => window.location.reload());
-  }
+  connectBtn.addEventListener("click", connectWallet);
 });
