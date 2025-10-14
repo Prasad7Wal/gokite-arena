@@ -194,12 +194,16 @@
         return false;
       }
 
-      // instantiate contract (with signer preferred)
-      contract = new window.ethers.Contract(CONTRACT_ADDRESS, ABI, signer || ethersProvider);
-
-      setStatus(`Connected: ${account.slice(0,6)}...${account.slice(-4)}`);
-      connectBtn.disabled = true;
-      joinBtn.disabled = false;
+     // instantiate contract with signer (must await in ethers v6)
+if (ethersProvider.getSigner) {
+  signer = await ethersProvider.getSigner();
+}
+if (!signer) {
+  setStatus("Signer not available — using read-only mode");
+  contract = new window.ethers.Contract(CONTRACT_ADDRESS, ABI, ethersProvider);
+} else {
+  contract = new window.ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+}
 
       // attach listeners (safe)
       try {
@@ -329,7 +333,11 @@
     if (!contract) { setStatus("No contract"); return; }
     setStatus("Loading leaderboard...");
     try {
-      const res = await contract.topPlayers();
+      const callRes = await (contract.connect
+  ? contract.connect(ethersProvider).topPlayers()
+  : contract.topPlayers());
+const res = callRes;
+
       if (!res || !Array.isArray(res)) { setStatus("Unexpected leaderboard data"); return; }
       const [names, scores] = res;
       leaderboardList.innerHTML = "";
