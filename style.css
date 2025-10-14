@@ -1,79 +1,46 @@
-/* CSS Attempt: 1  (bump this number in the file + the query string in index.html to force CSS update) */
-
 :root{
-  --bg:#f5efe2; /* beige */
-  --card:#f3e9dc;
-  --accent:#8b6d5c; /* tan/dark */
-  --muted:#6b5a4a;
-  --text:#141214;
+  --bg: #efe6da;       /* beige/tan background */
+  --card: #f6f0e8;
+  --accent: #8b6d5c;   /* tan/brown accent */
+  --dark: #0b0b0b;     /* black/dark text */
+  --muted: #6b665f;
+  --white: #ffffff;
 }
-
 *{box-sizing:border-box}
 body{
   margin:0;
-  font-family: Inter, system-ui, Arial, sans-serif;
-  background:linear-gradient(180deg,var(--bg), #e4d6c2);
-  color:var(--text);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  min-height:100vh;
+  background: linear-gradient(180deg,var(--bg), #e6dfd4);
+  color:var(--dark);
+  font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
 }
-
-.container{
-  width:100%;
-  max-width:900px;
-  background:var(--card);
-  border-radius:14px;
-  padding:22px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+.container{max-width:980px;margin:28px auto;padding:18px}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.title{font-weight:700;font-size:20px}
+.accent{color:var(--accent)}
+.status{font-size:13px;color:var(--muted)}
+.panel{background:var(--card);padding:18px;border-radius:10px;box-shadow:0 6px 18px rgba(11,11,11,0.06);margin-bottom:14px}
+.center{text-align:center}
+.primary{
+  background:linear-gradient(180deg,var(--accent),#7a5b4d);
+  color:var(--white);
+  border:none;padding:10px 16px;border-radius:10px;font-weight:700;cursor:pointer;margin:6px;
 }
-
-header h1{margin:0;font-size:22px}
-header .sub{margin:6px 0 18px;color:var(--muted)}
-
-.attempts{
-  display:flex;
-  gap:12px;
-  justify-content:flex-start;
-  color:var(--muted);
-  margin-bottom:12px;
+.secondary{
+  background:transparent;border:1px solid var(--muted);padding:8px 12px;border-radius:8px;cursor:pointer;margin:6px;
 }
-
-.info{margin-top:8px;color:var(--muted);font-size:13px}
-
-#wallet-area, #join-area, #quiz-area, #leaderboard-area, .admin { margin:12px 0; }
-
-input[type="text"], input[type="password"], input {
-  padding:10px;
-  border-radius:8px;
-  border:1px solid rgba(0,0,0,0.06);
-  width:260px;
-  font-size:14px;
-}
-
-button{
-  background:linear-gradient(180deg,var(--accent), #5b4438);
-  color:#fff;
-  border:none;
-  padding:10px 16px;
-  border-radius:10px;
-  cursor:pointer;
-  font-weight:700;
-  margin-left:8px;
-}
-
-button:disabled{
-  opacity:0.45;
-  cursor:not-allowed;
-}
-
+.primary:disabled{opacity:0.5;cursor:not-allowed}
 .hidden{display:none}
-
-#quiz { margin-top:12px; background: rgba(255,255,255,0.85); padding:14px; border-radius:10px; color:var(--text); }
-.slide { display:none; }
-.active-slide { display:block; }
-
-.quiz-controls{margin-top:12px}
-#leaderboard{max-height:320px; overflow:auto; padding-left:18px; color:var(--text); background:transparent}
-footer{margin-top:14px;color:var(--muted);font-size:12px}
+.muted{color:var(--muted);font-size:13px;margin-top:8px}
+.small{font-size:12px}
+.questionBox{font-weight:700;font-size:18px;margin:16px 0}
+.answers{display:flex;flex-direction:column;gap:10px}
+.answers button{background:white;border:1px solid #ddd;padding:10px;border-radius:8px;text-align:left;cursor:pointer}
+.answers button.selected{background:linear-gradient(180deg,#f0e3d9,#ead8c8);border-color:var(--accent)}
+.leaderboard{list-style:none;padding-left:0;max-height:360px;overflow:auto;margin:0}
+.leaderboard li{padding:8px;border-bottom:1px dashed rgba(0,0,0,0.03)}
+.footer{display:flex;justify-content:space-between;align-items:center;padding:10px 0;font-size:13px}
+input[type="text"], input[type="password"], input[type="number"]{
+  padding:8px;border-radius:8px;border:1px solid #ddd;max-width:320px;width:100%;
+}
