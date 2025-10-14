@@ -1,131 +1,234 @@
-// === DOM Elements ===
-const statusText = document.getElementById("statusText");
-const connectBtn = document.getElementById("connectWalletBtn");
-const joinBtn = document.getElementById("joinArenaBtn");
-const discordDiv = document.getElementById("discordDiv");
-const saveDiscordBtn = document.getElementById("saveDiscordBtn");
-const discordInput = document.getElementById("discordName");
-const quizDiv = document.getElementById("quizDiv");
-const questionText = document.getElementById("questionText");
-const answersDiv = document.getElementById("answers");
-const leaderboardUl = document.getElementById("leaderboard");
-
-// === CONTRACT CONFIG ===
+// Smart contract address and ABI
 const contractAddress = "0xf8721539eaa06fb3b4fc62f4c1d20e4db13fd9d1";
-const abi = [
-  "function joinArena() payable",
-  "function updateScore(uint256 _score, string calldata _discord)",
-  "function topPlayers() view returns (string[] memory, uint256[] memory)"
+const contractABI = [
+  "function joinArena() public",
+  "function updateScore(uint256 score, string discord) public",
+  "function topPlayers() public view returns (string[] memory, uint256[] memory)",
+  "function setQuestions(string[] memory questions, string[] memory answers) public",
+  "function adminUpdateScore(string memory discord, int256 newScore) public"
 ];
 
-// === WALLET VARIABLES ===
-let provider, signer, contract, userAddress;
-let userDiscord = "";
-let score = 0;
-let currentQuestion = 0;
+// KiteAI Testnet (chainId 2368) network data
+const chainData = {
+  chainId: "0x940",
+  chainName: "KiteAI Testnet",
+  nativeCurrency: { name: "KITE", symbol: "KITE", decimals: 18 },
+  rpcUrls: ["https://rpc-testnet.gokite.ai"],
+  blockExplorerUrls: ["https://testnet.kitescan.ai"]
+};
 
-// === QUIZ DATA ===
-const quizQuestions = [
-  { q: "What is GoKite AI?", a: ["Blockchain platform", "App", "Video codec", "Database"], correct: 0 },
-  { q: "Token symbol used?", a: ["KITE","ETH","BTC","SOL"], correct: 0 },
-  { q: "Wallet required?", a: ["Yes","No","Optional","Later"], correct: 0 },
-  { q: "Quiz questions per round?", a: ["10","5","20","15"], correct: 0 },
-  { q: "Points for correct?", a: ["1","2","5","0"], correct: 0 },
-  { q: "Points for wrong?", a: ["-1","0","1","2"], correct: 0 },
-  { q: "Leaderboard shows?", a: ["Discord","Wallet","Email","Name"], correct: 0 },
-  { q: "Deposit amount?", a: ["0.01","0.1","1","0.001"], correct: 0 },
-  { q: "Should wait for provider?", a: ["Yes","No","Sometimes","Never"], correct: 0 },
-  { q: "Hosting free on GitHub Pages?", a: ["Yes","No","Only paid","Server needed"], correct: 0 }
+// Ethers provider and contract instances
+let provider, signer, contract;
+// Read-only provider for leaderboard (no wallet needed)
+const readProvider = new ethers.JsonRpcProvider(chainData.rpcUrls[0]);
+const readContract = new ethers.Contract(contractAddress, contractABI, readProvider);
+
+// Sample quiz questions (can be edited by admin)
+let questions = [
+  { q: "What is 2+2?", options: ["3", "4", "5", "6"], answer: 1 },
+  { q: "Which planet is known as the Red Planet?", options: ["Earth", "Mars", "Jupiter", "Venus"], answer: 1 },
+  { q: "What is the capital of France?", options: ["Rome", "Berlin", "Paris", "Madrid"], answer: 2 },
+  { q: "What does HTML stand for?", options: ["Hyperlinks and Text Markup", "Home Tool Markup", "Hyper Text Markup Language", "Hyper Text Marketing Language"], answer: 2 },
+  { q: "Who wrote 'Hamlet'?", options: ["Charles Dickens", "William Shakespeare", "Mark Twain", "J.K. Rowling"], answer: 1 },
+  { q: "What is the boiling point of water?", options: ["90°C", "80°C", "100°C", "120°C"], answer: 2 },
+  { q: "Which is the largest mammal?", options: ["Elephant", "Blue Whale", "Giraffe", "Rhino"], answer: 1 },
+  { q: "Which element has the chemical symbol 'O'?", options: ["Gold", "Oxygen", "Silver", "Iron"], answer: 1 },
+  { q: "Who painted the Mona Lisa?", options: ["Pablo Picasso", "Leonardo da Vinci", "Vincent van Gogh", "Claude Monet"], answer: 1 },
+  { q: "What year did Apollo 11 land on the moon?", options: ["1965", "1969", "1972", "1959"], answer: 1 }
 ];
 
-// === STATUS HELPER ===
-function setStatus(msg){ statusText.innerText = msg; }
+// Admin password (demo only; in real app use secure auth)
+const adminPassword = "quizMaster123";
 
-// === PICK INJECTED WALLET ===
-function getInjectedProvider() {
-  if(!window.ethereum) return null;
-  if(Array.isArray(window.ethereum.providers)){
-    const mm = window.ethereum.providers.find(p => p.isMetaMask);
-    if(mm) return mm;
-    return window.ethereum.providers[0];
+// On page load: generate quiz UI and load leaderboard
+window.addEventListener('load', async () => {
+  if (typeof window.ethereum === 'undefined') {
+    alert("MetaMask (or compatible wallet) is not installed.");
+    return;
   }
-  return window.ethereum;
-}
+  generateQuiz();
+  loadLeaderboard();
+});
 
-// === CONNECT WALLET ===
-// 🔒 Keep your working wallet & joinArena code exactly as-is!
-// This part is fully untouched and 100% working
-
-// === JOIN ARENA ===
-// 🔒 This is your working joinArena code. No change!
-
-// === QUIZ FUNCTIONS ===
-function startQuiz() {
-  const name = discordInput.value.trim();
-  if(!name) return alert("Enter Discord name!");
-  userDiscord = name; score = 0; currentQuestion = 0;
-  discordDiv.classList.add("hidden");
-  quizDiv.classList.remove("hidden");
-  loadQuestion();
-}
-
-function loadQuestion() {
-  if(currentQuestion >= quizQuestions.length) return finishQuiz();
-  const q = quizQuestions[currentQuestion];
-  questionText.textContent = q.q;
-  answersDiv.innerHTML = "";
-  q.a.forEach((ans, idx)=>{
-    const btn = document.createElement("button");
-    btn.textContent = ans;
-    btn.onclick = ()=>{
-      if(idx === q.correct) score += 1;
-      else score -= 1;
-      currentQuestion++;
-      loadQuestion();
-    };
-    answersDiv.appendChild(btn);
+// Generate quiz questions into the DOM
+function generateQuiz() {
+  const quizSection = document.getElementById("quiz-section");
+  quizSection.innerHTML = "";
+  questions.forEach((item, index) => {
+    const div = document.createElement("div");
+    div.className = "question";
+    let html = `<p><strong>${index+1}. ${item.q}</strong></p>`;
+    item.options.forEach((opt, i) => {
+      html += `<label><input type="radio" name="q${index}" value="${i}"> ${opt}</label><br>`;
+    });
+    div.innerHTML = html;
+    quizSection.appendChild(div);
   });
 }
 
-async function finishQuiz() {
-  quizDiv.classList.add("hidden");
-  setStatus("Submitting score...");
-  try{
-    const tx = await contract.updateScore(score, userDiscord);
-    await tx.wait();
-    setStatus("✅ Score submitted!");
-    await loadLeaderboard();
-  } catch(e){
-    console.error(e);
-    alert("Submit score failed: "+(e.message||e));
-    setStatus("❌ Score submit failed");
-  }
-}
-
-// === LEADERBOARD ===
-async function loadLeaderboard(){
-  if(!contract) return;
-  setStatus("Loading leaderboard...");
-  try{
-    const [names,scores] = await contract.topPlayers();
-    leaderboardUl.innerHTML = "";
-    for(let i=0;i<Math.min(names.length,100);i++){
-      const li = document.createElement("li");
-      li.textContent = `${i+1}. ${names[i]} — ${scores[i]} pts`;
-      leaderboardUl.appendChild(li);
+// Load and display the leaderboard from the contract
+async function loadLeaderboard() {
+  try {
+    const [names, scores] = await readContract.topPlayers();
+    const table = document.getElementById("leaderboardTable");
+    table.innerHTML = "<tr><th>Rank</th><th>Discord</th><th>Score</th></tr>";
+    for (let i = 0; i < names.length; i++) {
+      const row = table.insertRow();
+      row.insertCell(0).innerText = i+1;
+      row.insertCell(1).innerText = names[i];
+      row.insertCell(2).innerText = scores[i].toString();
     }
-    setStatus("Leaderboard loaded");
-  }catch(e){
-    console.error("Leaderboard load error", e);
-    setStatus("❌ Leaderboard failed");
+  } catch (err) {
+    console.error("Error loading leaderboard:", err);
   }
 }
 
-// === EVENTS ===
-saveDiscordBtn.addEventListener("click", startQuiz);
+// Connect wallet and ensure correct network
+document.getElementById("connectButton").addEventListener('click', async () => {
+  try {
+    provider = new ethers.BrowserProvider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    signer = await provider.getSigner();
+    // Switch to KiteAI Testnet if needed
+    const net = await provider.getNetwork();
+    if (net.chainId !== parseInt(chainData.chainId, 16)) {
+      try {
+        await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: chainData.chainId }]});
+      } catch (switchError) {
+        if (switchError.code === 4902) {
+          await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [chainData] });
+        } else {
+          throw switchError;
+        }
+      }
+    }
+    contract = new ethers.Contract(contractAddress, contractABI, signer);
+    const userAddr = await signer.getAddress();
+    document.getElementById("walletAddress").innerText = "Connected: " + userAddr;
+    document.getElementById("connectButton").disabled = true;
+    document.getElementById("joinButton").disabled = false;
+    document.getElementById("discordName").disabled = false;
+    document.getElementById("submitScoreButton").disabled = false;
+  } catch (err) {
+    console.error(err);
+    alert("Wallet connection failed: " + err.message);
+  }
+});
 
-// === INITIAL STATE ===
-discordDiv.classList.add("hidden");
-quizDiv.classList.add("hidden");
-joinBtn.disabled = true;
-setStatus("Not connected");
+// Join the arena (on-chain transaction)
+document.getElementById("joinButton").addEventListener('click', async () => {
+  try {
+    const tx = await contract.joinArena();
+    await tx.wait();
+    alert("Successfully joined the arena!");
+    document.getElementById("joinButton").disabled = true;
+  } catch (err) {
+    console.error(err);
+    alert("joinArena() failed: " + err.message);
+  }
+});
+
+// Submit quiz score (calculates +1 for correct, -1 for wrong)
+document.getElementById("submitScoreButton").addEventListener('click', async () => {
+  const discord = document.getElementById("discordName").value.trim();
+  if (!discord) {
+    alert("Enter your Discord username before submitting.");
+    return;
+  }
+  // Calculate score
+  let score = 0;
+  questions.forEach((item, idx) => {
+    const sel = document.querySelector(`input[name="q${idx}"]:checked`);
+    if (sel) {
+      if (parseInt(sel.value) === item.answer) score += 1;
+      else score -= 1;
+    }
+  });
+  try {
+    const tx = await contract.updateScore(score, discord);
+    await tx.wait();
+    alert(`Your score (${score}) has been recorded!`);
+    loadLeaderboard();
+  } catch (err) {
+    console.error(err);
+    alert("updateScore() failed: " + err.message);
+  }
+});
+
+// Admin login: reveals admin panel if password is correct
+document.getElementById("adminButton").addEventListener('click', () => {
+  const pwd = prompt("Enter admin password:");
+  if (pwd === adminPassword) {
+    document.getElementById("adminPanel").style.display = "block";
+    // Populate question editor fields
+    const editor = document.getElementById("questionEditor");
+    editor.innerHTML = "";
+    questions.forEach((item, idx) => {
+      const div = document.createElement("div");
+      div.className = "question-edit";
+      div.innerHTML = `
+        <h4>Question ${idx+1}</h4>
+        <input type="text" class="edit-question" value="${item.q}" placeholder="Question text"><br>
+        <input type="text" class="edit-option" value="${item.options[0]}" placeholder="Option A"><br>
+        <input type="text" class="edit-option" value="${item.options[1]}" placeholder="Option B"><br>
+        <input type="text" class="edit-option" value="${item.options[2]}" placeholder="Option C"><br>
+        <input type="text" class="edit-option" value="${item.options[3]}" placeholder="Option D"><br>
+        <input type="number" min="0" max="3" class="edit-answer" value="${item.answer}" placeholder="Correct index (0-3)"><br><br>
+      `;
+      editor.appendChild(div);
+    });
+  } else {
+    alert("Incorrect password.");
+  }
+});
+
+// Save edited questions (updates in-memory quiz)
+document.getElementById("saveQuestionsButton").addEventListener('click', () => {
+  const editor = document.getElementById("questionEditor");
+  const edits = editor.querySelectorAll(".question-edit");
+  const newQs = [];
+  edits.forEach(div => {
+    const qtext = div.querySelector(".edit-question").value;
+    const opts = [
+      div.querySelectorAll(".edit-option")[0].value,
+      div.querySelectorAll(".edit-option")[1].value,
+      div.querySelectorAll(".edit-option")[2].value,
+      div.querySelectorAll(".edit-option")[3].value
+    ];
+    const ans = parseInt(div.querySelector(".edit-answer").value);
+    newQs.push({ q: qtext, options: opts, answer: ans });
+  });
+  questions = newQs;
+  generateQuiz();
+  alert("Questions updated (locally).");
+  // If contract supports setQuestions, we could call it here:
+  // try { 
+  //   const tx = await contract.setQuestions(questions.map(q=>q.q), questions.map(q=>JSON.stringify(q.options)));
+  //   await tx.wait();
+  // } catch(e) { console.error("setQuestions on-chain failed", e); }
+});
+
+// Admin updates a user score manually on-chain
+document.getElementById("adminUpdateScoreButton").addEventListener('click', async () => {
+  const discord = document.getElementById("adminDiscord").value.trim();
+  const newScore = parseInt(document.getElementById("adminScore").value);
+  if (!discord || isNaN(newScore)) {
+    alert("Enter valid Discord name and score.");
+    return;
+  }
+  try {
+    const tx = await contract.adminUpdateScore(discord, newScore);
+    await tx.wait();
+    alert("Score updated on-chain for user " + discord);
+    loadLeaderboard();
+  } catch (err) {
+    console.error(err);
+    alert("adminUpdateScore() failed: " + err.message);
+  }
+});
+
+// Refresh page on account or network change for simplicity
+if (window.ethereum) {
+  window.ethereum.on('chainChanged', () => window.location.reload());
+  window.ethereum.on('accountsChanged', () => window.location.reload());
+}
