@@ -198,7 +198,8 @@ submitBtn.addEventListener("click", async ()=>{
 
   try{
     setStatus("⏳ Submitting score on-chain...");
-    const tx = await contract.submitScore(score, userDiscord, { value: ethers.utils.parseEther("0.001"), gasLimit: 300000 });
+    const tx = await contract.submitScore(score, userDiscord, { value: 0 });
+
     await tx.wait();
     setStatus("✅ Score submitted!");
     await loadLeaderboard();
