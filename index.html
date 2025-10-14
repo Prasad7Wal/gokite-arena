@@ -1,40 +1,66 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>GoKite Arena</title>
+  <meta charset="utf-8" />
+  <title>On-Chain Quiz Arena</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.0/dist/ethers.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.15.0/ethers.umd.min.js"></script>
+  <script src="app.js" defer></script>
 </head>
 <body>
+  <header><h1>Quiz Arena</h1></header>
   <div class="container">
-    <h1>GoKite Arena</h1>
-    <p id="statusText">Not connected</p>
-
-    <div class="controls">
-      <button id="connectWalletBtn">Connect Wallet</button>
-      <button id="joinArenaBtn" disabled>Join Arena (0.01 KITE)</button>
-    </div>
-
-    <!-- Discord input appears after joining arena -->
-    <div id="discordDiv" class="panel hidden">
-      <input type="text" id="discordName" placeholder="Enter Discord Name">
-      <button id="saveDiscordBtn">Start Quiz</button>
-    </div>
-
-    <!-- Quiz panel -->
-    <div id="quizDiv" class="panel hidden">
-      <div id="questionText"></div>
-      <div id="answers"></div>
-    </div>
-
+    <!-- Wallet Connect Section -->
+    <section id="wallet-section">
+      <button id="connectButton">Connect Wallet</button>
+      <span id="walletAddress"></span>
+    </section>
+    <!-- Join Arena -->
+    <section id="join-section">
+      <button id="joinButton" disabled>Join Arena</button>
+    </section>
+    <!-- Discord Username Input -->
+    <section id="discord-section">
+      <label for="discordName">Discord Username:</label>
+      <input type="text" id="discordName" placeholder="e.g. user#1234" disabled>
+    </section>
+    <!-- Quiz Questions (Generated via JS) -->
+    <section id="quiz-section">
+      <!-- Quiz questions will be injected here -->
+    </section>
+    <!-- Submit Score -->
+    <section id="score-section">
+      <button id="submitScoreButton" disabled>Submit Score</button>
+    </section>
     <!-- Leaderboard -->
-    <h2>Top 100 Players</h2>
-    <ul id="leaderboard"></ul>
-
-    <p class="footer">Powered by GoKite AI</p>
+    <section id="leaderboard-section">
+      <h2>Leaderboard (Top 100)</h2>
+      <table id="leaderboardTable">
+        <!-- Filled by JS: Rank | Discord | Score -->
+      </table>
+    </section>
+    <!-- Admin Section (Password-protected) -->
+    <section id="admin-section">
+      <button id="adminButton">Admin Login</button>
+      <div id="adminPanel" style="display:none;">
+        <h2>Admin Panel</h2>
+        <!-- Edit Questions -->
+        <h3>Edit Questions</h3>
+        <div id="questionEditor"></div>
+        <button id="saveQuestionsButton">Save Questions</button>
+        <!-- Update Scores -->
+        <h3>Update User Score</h3>
+        <label for="adminDiscord">Discord Username:</label>
+        <input type="text" id="adminDiscord" placeholder="Discord name">
+        <label for="adminScore">New Score:</label>
+        <input type="number" id="adminScore" placeholder="New score">
+        <button id="adminUpdateScoreButton">Update Score On-Chain</button>
+      </div>
+    </section>
   </div>
-
-  <script src="script.js"></script>
+  <footer>
+    <p>&copy; Quiz Arena. All rights reserved.</p>
+  </footer>
 </body>
 </html>
