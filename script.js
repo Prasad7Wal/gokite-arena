@@ -1,13 +1,11 @@
-let provider;
-let signer;
-let userAddress;
-let contract;
+let provider, signer, userAddress, contract;
 
-// Contract info
-const contractAddress = "0xf8721539eaa06fb3b4fc62f4c1d20e4db13fd9d1";
+// New contract info
+const contractAddress = "0x2779529ca08560a7b977a92879bdd141b2e35ae9";
 const contractABI = [
-  "function submitScore(uint256 score, string discordName) public",
-  "function getLeaderboard() public view returns (string[] memory names, uint256[] memory scores)"
+  "function submitScore(uint256 score, string discordName) public payable",
+  "function getLeaderboard() public view returns (string[] memory names, uint256[] memory scores)",
+  "function entryFee() public view returns (uint256)"
 ];
 
 const quizQuestions = [
@@ -25,7 +23,7 @@ const quizQuestions = [
 
 let currentSlide = 0;
 
-// --- Wallet Connect ---
+// Wallet connect
 document.getElementById("connectWallet").addEventListener("click", async () => {
   if (window.ethereum) {
     try {
@@ -39,23 +37,33 @@ document.getElementById("connectWallet").addEventListener("click", async () => {
       contract = new ethers.Contract(contractAddress, contractABI, signer);
     } catch (err) {
       console.error(err);
-      alert("Wallet connection failed. Make sure you are on the correct network.");
+      alert("Wallet connection failed");
     }
   } else {
     alert("No Web3 wallet detected!");
   }
 });
 
-// --- Start Quiz ---
-document.getElementById("startQuiz").addEventListener("click", () => {
-  const discord = document.getElementById("discordName").value.trim();
-  if (!discord) return alert("Enter your Discord name!");
-  document.getElementById("discord-container").classList.add("hidden");
-  document.getElementById("quiz-container").classList.remove("hidden");
-  showSlide(0);
+// Pay entry fee and start quiz
+document.getElementById("payFeeBtn").addEventListener("click", async () => {
+  const discord = document.getElementById("discordName").value;
+  if (!discord) return alert("Enter Discord Name");
+
+  try {
+    const fee = await contract.entryFee();
+    const tx = await contract.submitScore(0, discord, { value: fee });
+    await tx.wait();
+    alert("Entry fee paid! Quiz unlocked.");
+    document.getElementById("discord-container").classList.add("hidden");
+    document.getElementById("quiz-container").classList.remove("hidden");
+    showSlide(0);
+  } catch (err) {
+    console.error(err);
+    alert("Payment failed. Check your balance or network.");
+  }
 });
 
-// --- Generate Quiz Slides ---
+// Generate quiz slides
 const quizDiv = document.getElementById("quiz");
 quizQuestions.forEach((q, i) => {
   const slide = document.createElement("div");
@@ -68,13 +76,11 @@ quizQuestions.forEach((q, i) => {
   quizDiv.appendChild(slide);
 });
 
-// --- Show Slide ---
 function showSlide(n) {
   const slides = document.querySelectorAll(".slide");
   slides.forEach(s => s.classList.remove("active-slide"));
   slides[n].classList.add("active-slide");
   currentSlide = n;
-
   document.getElementById("prevBtn").style.display = n === 0 ? "none" : "inline-block";
   document.getElementById("nextBtn").style.display = n === slides.length - 1 ? "none" : "inline-block";
   document.getElementById("submitQuiz").style.display = n === slides.length - 1 ? "inline-block" : "none";
@@ -83,7 +89,7 @@ function showSlide(n) {
 document.getElementById("prevBtn").addEventListener("click", () => showSlide(currentSlide - 1));
 document.getElementById("nextBtn").addEventListener("click", () => showSlide(currentSlide + 1));
 
-// --- Submit Quiz ---
+// Submit quiz answers to blockchain
 document.getElementById("submitQuiz").addEventListener("click", async () => {
   let score = 0;
   quizQuestions.forEach((q, i) => {
@@ -91,54 +97,19 @@ document.getElementById("submitQuiz").addEventListener("click", async () => {
     if (selected && parseInt(selected.value) === q.correct) score++;
   });
 
-  const discord = document.getElementById("discordName").value.trim();
-  if (!discord) return alert("Discord name missing!");
-
+  const discord = document.getElementById("discordName").value;
   try {
-    // Gas estimate with fallback
-    let tx;
-    try {
-      tx = await contract.submitScore(score, discord);
-    } catch (err) {
-      // fallback with manual gas limit
-      tx = await contract.submitScore(score, discord, { gasLimit: 500000 });
-    }
+    const tx = await contract.submitScore(score, discord, { value: 0 });
     await tx.wait();
     alert("Quiz submitted successfully!");
+    loadLeaderboard();
     document.getElementById("quiz-container").classList.add("hidden");
     document.getElementById("leaderboard-container").classList.remove("hidden");
-    loadLeaderboard();
   } catch (err) {
     console.error(err);
-    alert("Blockchain submission failed. Make sure your contract supports the function and testnet balance is enough.");
+    alert("Error submitting quiz to blockchain");
   }
 });
 
-// --- Load Leaderboard ---
-async function loadLeaderboard() {
-  if (!contract) return;
-  try {
-    const [names, scores] = await contract.getLeaderboard();
-    const lb = document.getElementById("leaderboard");
-    lb.innerHTML = "";
-    for (let i = 0; i < names.length; i++) {
-      const li = document.createElement("li");
-      li.innerText = `${names[i]} - ${scores[i]} points`;
-      lb.appendChild(li);
-    }
-  } catch (err) {
-    console.error(err);
-    alert("Failed to load leaderboard from blockchain.");
-  }
-}
-
-// --- Admin Login ---
-document.getElementById("adminLoginBtn").addEventListener("click", () => {
-  const pwd = document.getElementById("adminPassword").value;
-  if (pwd === "YOUR_ADMIN_PASSWORD") {
-    alert("Admin logged in! You can now manage questions and points.");
-    // Placeholder: implement admin controls
-  } else {
-    alert("Incorrect password");
-  }
-});
+// Load leaderboard
+async function
