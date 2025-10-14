@@ -16,6 +16,7 @@ header {
   padding: 20px;
   font-size: 1.8em;
   font-weight: bold;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
 }
 
 main {
@@ -30,17 +31,20 @@ main {
 }
 
 button {
-  background-color: #8b6d5c;
+  background: linear-gradient(145deg, #8b6d5c, #755744);
   color: #fff;
   border: none;
-  padding: 10px 20px;
+  padding: 12px 25px;
   margin: 5px 0;
   cursor: pointer;
-  border-radius: 5px;
+  border-radius: 8px;
+  font-weight: bold;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 button:hover {
-  background-color: #755744;
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
 
 input {
@@ -62,10 +66,16 @@ input {
 
 .active-slide {
   display: block;
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from {opacity: 0;}
+  to {opacity: 1;}
 }
 
 #quiz-nav {
-  margin-top: 10px;
+  margin-top: 15px;
 }
 
 footer {
@@ -77,4 +87,8 @@ footer {
 
 #leaderboard-container ol {
   padding-left: 20px;
+}
+
+label input[type="radio"] {
+  accent-color: #8b6d5c;
 }
