@@ -1,19 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Universal Wallet Connect</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-</head>
-<body> 
-  <div class="container">
-    <h1>💸 Universal Wallet Connector</h1>
-    <button id="connectBtn">🔗 Connect Wallet</button>
-    <p id="walletStatus">Not connected</p>
-    <div id="walletInfo"></div>
-  </div>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GoKite Arena — Robust DApp</title>
 
-  <script src="script.js"></script>
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- ethers v6 UMD (needed by script.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.15.0/dist/ethers.umd.min.js"></script>
+</head>
+<body>
+  <main class="container">
+    <h1>🏆 GoKite Arena</h1>
+
+    <div id="status" class="status">Status: ready</div>
+
+    <div class="controls">
+      <button id="connectBtn">Connect Wallet</button>
+      <button id="joinBtn" disabled>Join Arena (0.01 KITE)</button>
+    </div>
+
+    <section id="discordSection" class="panel hidden">
+      <h3>Enter Discord Name</h3>
+      <input id="discordInput" placeholder="Discord#1234 or handle" />
+      <button id="startQuizBtn">Start Quiz</button>
+    </section>
+
+    <section id="quizSection" class="panel hidden">
+      <h3 id="questionTitle">Question</h3>
+      <div id="answers"></div>
+    </section>
+
+    <section id="leaderboardSection" class="panel hidden">
+      <h3>Top Players (up to 100)</h3>
+      <ol id="leaderboard"></ol>
+    </section>
+
+    <footer class="footer">Built for GoKite AI — Testnet friendly</footer>
+  </main>
+
+  <!-- main app script -->
+  <script src="script.js" defer></script>
 </body>
 </html>
