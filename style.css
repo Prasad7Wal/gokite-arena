@@ -1,43 +1,41 @@
-:root{
-  --bg:#0f1724;
-  --card:#0b1220;
-  --accent:#00c3ff;
-  --muted:#94a3b8;
-  --white:#ecf0f3; 
+body {
+  background: #0a0a0a;
+  color: #00ffb3;
+  font-family: "Poppins", sans-serif;
+  text-align: center;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-*{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:Inter,system-ui,Arial,sans-serif;
-  background: linear-gradient(180deg,#021124 0%, #071526 100%);
-  color:var(--white);
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
+
+.container {
+  border: 2px solid #00ffb3;
+  border-radius: 15px;
+  padding: 30px;
+  width: 350px;
+  background: #101010;
+  box-shadow: 0 0 20px rgba(0,255,179,0.3);
 }
-.container{
-  max-width:920px;
-  margin:32px auto;
-  padding:24px;
-  background:linear-gradient(180deg,rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  border-radius:12px;
-  box-shadow: 0 8px 30px rgba(2,6,23,0.6);
+
+button {
+  background: #00ffb3;
+  border: none;
+  padding: 12px 25px;
+  font-size: 16px;
+  color: #0a0a0a;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: 0.3s;
 }
-h1{margin:0 0 10px;font-size:28px}
-.status{margin:6px 0 18px;color:var(--muted)}
-.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
-button{
-  background:linear-gradient(180deg,var(--accent),#0088cc);
-  color:#04202a;
-  padding:10px 16px;border-radius:10px;border:none;font-weight:700;cursor:pointer;
-  box-shadow: 0 6px 20px rgba(0,195,255,0.12);
+
+button:hover {
+  background: #00cc8e;
 }
-button:disabled{
-  background:#334155;color:#94a3b8;cursor:not-allowed;box-shadow:none;
+
+#walletInfo {
+  margin-top: 15px;
+  font-size: 14px;
+  color: #9fffd4;
+  word-break: break-all;
 }
-.panel{margin-top:16px;padding:16px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03)}
-.hidden{display:none}
-input{padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);width:260px;color:var(--white);background:transparent}
-#answers{display:flex;flex-direction:column;gap:10px;margin-top:12px}
-#answers button{width:100%;background:linear-gradient(180deg,#1fb6ff,#0077cc);color:#00131b;border-radius:8px;padding:12px}
-#leaderboard{margin:12px 0 0;padding-left:20px;text-align:left;color:var(--white);max-height:320px;overflow:auto}
-.footer{margin-top:20px;color:var(--muted);font-size:13px}
