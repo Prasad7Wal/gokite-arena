@@ -3,7 +3,7 @@
 // Compatible with all modern browser EVM injectors
 // No dependencies beyond ethers.js v6
 
-const CONTRACT_ADDRESS = "YOUR_CONTRACT_ADDRESS_HERE"; // 🔧 Replace with your deployed contract
+const CONTRACT_ADDRESS = "0xf8721539eaa06fb3b4fc62f4c1d20e4db13fd9d1"; // 🔧 Replace with your deployed contract
 const CONTRACT_ABI = [
   // 🔧 Replace this ABI with your actual contract ABI
   "function joinArena() payable",
