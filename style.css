@@ -1,43 +1,91 @@
-:root{
-  --bg:#071526;
-  --card:#0b1220;
-  --accent:#00c3ff;
-  --muted:#94a3b8;
-  --white:#ecf0f3;
+:root {
+  --bg-color: #f5f5dc;       /* Beige */
+  --accent-color: #d2b48c;   /* Tan */
+  --text-color: #000;
+  --btn-bg: #000;
+  --btn-text: #fff;
 }
-*{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:Inter,system-ui,Arial,sans-serif;
-  background: linear-gradient(180deg,#021124 0%, #071526 100%);
-  color:var(--white);
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
+
+body {
+  margin: 0; padding: 0;
+  background: var(--bg-color);
+  color: var(--text-color);
+  font-family: Arial, sans-serif;
 }
-.container{
-  max-width:920px;
-  margin:32px auto;
-  padding:24px;
-  background:linear-gradient(180deg,rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  border-radius:12px;
-  box-shadow: 0 8px 30px rgba(2,6,23,0.6);
+header {
+  background: var(--accent-color);
+  color: #fff;
+  padding: 1em;
+  text-align: center;
 }
-h1{margin:0 0 10px;font-size:28px}
-.status{margin:6px 0 18px;color:var(--muted)}
-.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
-button{
-  background:linear-gradient(180deg,var(--accent),#0088cc);
-  color:#04202a;
-  padding:10px 16px;border-radius:10px;border:none;font-weight:700;cursor:pointer;
-  box-shadow: 0 6px 20px rgba(0,195,255,0.12);
+h1 { margin: 0; }
+.container {
+  width: 90%; max-width: 800px;
+  margin: 1em auto;
+  padding: 0 1em;
 }
-button:disabled{
-  background:#334155;color:#94a3b8;cursor:not-allowed;box-shadow:none;
+section { margin-bottom: 1.5em; }
+label {
+  display: block;
+  margin-bottom: 0.3em;
 }
-.panel{margin-top:16px;padding:16px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03)}
-.hidden{display:none}
-input{padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);width:260px;color:var(--white);background:transparent}
-#answers{display:flex;flex-direction:column;gap:10px;margin-top:12px}
-#answers button{width:100%;background:linear-gradient(180deg,#1fb6ff,#0077cc);color:#00131b;border-radius:8px;padding:12px}
-#leaderboard{margin:12px 0 0;padding-left:20px;text-align:left;color:var(--white);max-height:320px;overflow:auto}
-.footer{margin-top:20px;color:var(--muted);font-size:13px} 
+input[type="text"], input[type="number"] {
+  width: 100%; max-width: 300px;
+  padding: 0.5em;
+  margin-bottom: 0.5em;
+  border: 1px solid #888;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+button {
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  border: none;
+  padding: 0.8em 1.2em;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 0.5em;
+}
+button:disabled {
+  background: #777;
+  cursor: not-allowed;
+}
+#quiz-section .question {
+  margin-bottom: 1em;
+  background: #fff;
+  padding: 0.8em;
+  border-radius: 4px;
+}
+.question-edit {
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 0.8em;
+  border-radius: 4px;
+  margin-bottom: 0.5em;
+}
+#adminPanel {
+  background: var(--accent-color);
+  padding: 1em;
+  border-radius: 4px;
+  color: #fff;
+}
+#adminPanel input {
+  background: #fff;
+  color: #000;
+  width: auto;
+  display: block;
+  margin-bottom: 0.5em;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th, td {
+  border: 1px solid #999;
+  padding: 0.5em;
+  text-align: left;
+}
+@media (max-width: 600px) {
+  .container { width: 100%; padding: 0.5em; }
+  button, input { width: 100%; }
+}
