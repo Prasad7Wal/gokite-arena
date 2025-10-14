@@ -1,3 +1,14 @@
+window.addEventListener('load', async () => {
+  if (typeof window.ethereum === 'undefined') {
+    alert('MetaMask not detected!');
+    return;
+  }
+
+  await ethereum.request({ method: 'eth_requestAccounts' });
+  window.provider = new ethers.providers.Web3Provider(window.ethereum);
+  console.log('Ethers loaded successfully');
+});
+
 // script.js
 // Defensive, production-pattern client for GoKite Quiz dApp (reads deployed contract address)
 
@@ -230,7 +241,8 @@ submitBtn.addEventListener("click", async ()=>{
   try{
     setStatus("⏳ Submitting score on-chain...");
     // Some contracts require value or not; here we send zero value for submission
-    const tx = await contract.submitScore(score, userDiscord, { value: 0 });
+    await contract.submit(score, username, { value: ethers.utils.parseEther("0.001") });
+
     await tx.wait();
     setStatus("✅ Score submitted!");
     // after submit, refresh leaderboard
