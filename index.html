@@ -1,27 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GoKite Quiz | Attempt 1</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GoKite Arena | Attempt Tracker</title>
+
+  <!-- IMPORTANT: increment CSS_ATTEMPT in style.css when updating CSS -->
+  <link rel="stylesheet" href="style.css?v=1.0.1" />
 </head>
 <body>
+
   <div class="container">
-    <h1>🚀 GoKite Blockchain Quiz</h1>
-    <p class="attempt">HTML Attempt 1 | JS Attempt 1 | CSS Attempt 1</p>
+    <header>
+      <h1>GoKite AI X Prasad_713 — Arena</h1>
+      <p class="sub">Blockchain Quiz — testnet friendly</p>
+    </header>
 
-    <button id="connectWalletBtn">🔗 Connect Wallet</button>
+    <section class="attempts">
+      <div>HTML Attempt: <strong id="htmlAttempt">1</strong></div>
+      <div>CSS Attempt: <strong id="cssAttempt">1</strong></div>
+      <div>JS Attempt: <strong id="jsAttempt">1</strong></div>
+    </section>
 
-    <div id="walletAddress" class="info"></div>
+    <section id="ui">
+      <div id="wallet-area">
+        <button id="connectWalletBtn">🔗 Connect Wallet</button>
+        <div id="walletStatus" class="info">Not connected</div>
+      </div>
 
-    <button id="joinQuizBtn" class="hidden">🎮 Join Quiz</button>
+      <div id="join-area" class="hidden">
+        <input id="discordName" placeholder="Enter Discord name (visible on leaderboard)" />
+        <button id="joinQuizBtn">🎮 Join Era (pay entry fee)</button>
+        <div id="joinStatus" class="info"></div>
+      </div>
 
-    <div id="statusMessage" class="info"></div>
+      <div id="quiz-area" class="hidden">
+        <div id="quiz"></div>
+        <div class="quiz-controls">
+          <button id="prevBtn" class="hidden">⬅ Prev</button>
+          <button id="nextBtn" class="hidden">Next ➡</button>
+          <button id="submitQuizBtn" class="hidden">Submit Quiz</button>
+        </div>
+      </div>
+
+      <div id="leaderboard-area" class="hidden">
+        <h2>🏅 Leaderboard (Top 100)</h2>
+        <ol id="leaderboard"></ol>
+      </div>
+
+      <div id="admin-area" class="admin">
+        <input id="adminPass" type="password" placeholder="Admin password" />
+        <button id="adminLoginBtn">Admin Login</button>
+        <div id="adminPanel" class="hidden">
+          <button id="updateQuestionsBtn">Update Weekly Questions</button>
+          <button id="manualAdjustBtn">Manual Adjust Points</button>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <small>UI theme: beige / tan / black — GoKite AI testnet</small>
+    </footer>
   </div>
 
-  <!-- ✅ Load Ethers.js before your script -->
+  <!-- Load ethers.js BEFORE your script -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
-  <script src="script.js"></script>
+
+  <!-- app script (increment JS attempt in header when you update) -->
+  <script src="script.js?v=1.0.1"></script>
 </body>
 </html>
