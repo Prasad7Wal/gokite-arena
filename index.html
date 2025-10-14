@@ -1,56 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GoKite Arena - Wallet Connect</title>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.15.0/dist/ethers.umd.min.js"></script>
-  <style>
-    body {
-      background: radial-gradient(circle, #090979, #020024);
-      color: white;
-      font-family: 'Poppins', sans-serif;
-      text-align: center;
-      height: 100vh;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    }
-    h1 {
-      font-size: 2rem;
-      margin-bottom: 20px;
-    }
-    button {
-      background: linear-gradient(90deg, #ff6a00, #ee0979);
-      border: none;
-      color: white;
-      padding: 12px 28px;
-      margin: 8px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: 0.3s;
-    }
-    button:hover {
-      opacity: 0.8;
-    }
-    #status {
-      margin-top: 20px;
-      font-size: 1.1rem;
-      color: #00ffcc;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <title>GoKite Arena</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.0/dist/ethers.umd.min.js"></script>
 </head>
 <body>
-  <h1>⚔️ GoKite Arena</h1>
-  <div>
-    <button id="connectWalletBtn">Connect Wallet</button>
-    <button id="joinArenaBtn">Join Arena (0.01 ETH)</button>
-  </div>
-  <div id="status">Status: Not connected</div>
+  <div class="container">
+    <h1>GoKite Arena</h1>
+    <p id="statusText">Not connected</p>
 
-  <script src="./script.js"></script>
+    <div class="controls">
+      <button id="connectWalletBtn">Connect Wallet</button>
+      <button id="joinArenaBtn" disabled>Join Arena (0.01 KITE)</button>
+    </div>
+
+    <!-- Discord input appears after joining arena -->
+    <div id="discordDiv" class="panel hidden">
+      <input type="text" id="discordName" placeholder="Enter Discord Name">
+      <button id="saveDiscordBtn">Start Quiz</button>
+    </div>
+
+    <!-- Quiz panel -->
+    <div id="quizDiv" class="panel hidden">
+      <div id="questionText"></div>
+      <div id="answers"></div>
+    </div>
+
+    <!-- Leaderboard -->
+    <h2>Top 100 Players</h2>
+    <ul id="leaderboard"></ul>
+
+    <p class="footer">Powered by GoKite AI</p>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
