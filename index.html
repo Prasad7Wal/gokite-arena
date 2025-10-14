@@ -1,83 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GoKite Quiz dApp - Attempt 1</title>
-  <style>
-    body {
-      background: linear-gradient(to bottom right, #0f172a, #1e293b);
-      color: white;
-      font-family: 'Poppins', sans-serif;
-      text-align: center;
-      margin: 0;
-      padding: 20px;
-    }
-    h1 {
-      color: #38bdf8;
-      margin-bottom: 20px;
-    }
-    .hidden { display: none; }
-    .slide { display: none; }
-    .active-slide { display: block; }
-    button {
-      background: #38bdf8;
-      color: white;
-      border: none;
-      padding: 12px 25px;
-      border-radius: 10px;
-      font-size: 16px;
-      cursor: pointer;
-      margin: 10px;
-      transition: 0.3s;
-    }
-    button:hover { background: #0ea5e9; }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GoKite AI X Prasad_713 — Quiz Arena</title>
 
-    .attempt-box {
-      margin-top: 25px;
-      padding: 10px;
-      border: 2px solid #38bdf8;
-      border-radius: 10px;
-      display: inline-block;
-    }
-  </style>
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- IMPORTANT: ethers must load BEFORE script.js -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 </head>
 <body>
-  <h1>🚀 GoKite Quiz dApp</h1>
+  <div class="container">
+    <header class="topbar">
+      <div class="title">GoKite AI X <span class="accent">Prasad_713</span></div>
+      <div id="statusLine" class="status">Status: <span id="statusText">Idle</span></div>
+    </header>
 
-  <div id="wallet-container">
-    <button id="connectWallet">Connect Wallet</button>
-    <p id="walletStatus"></p>
+    <section class="panel" id="mainPanel">
+      <div class="center">
+        <button id="connectBtn" class="primary">Connect Wallet</button>
+        <button id="joinBtn" class="primary" disabled>Join Arena (pay entry)</button>
+      </div>
+
+      <div id="walletInfo" class="muted"></div>
+
+      <div id="discordArea" class="hidden">
+        <label>Discord name (visible on leaderboard)</label>
+        <input id="discordInput" placeholder="discord_user#1234" />
+        <div class="center">
+          <button id="saveDiscordBtn" class="primary">Save & Start Quiz</button>
+        </div>
+      </div>
+
+      <div id="quizArea" class="hidden">
+        <div id="questionBox" class="questionBox"></div>
+        <div id="answers" class="answers"></div>
+        <div class="center">
+          <button id="prevQ" class="secondary">Previous</button>
+          <button id="nextQ" class="secondary">Next</button>
+        </div>
+      </div>
+
+      <div id="finishArea" class="hidden center">
+        <button id="submitBtn" class="primary">Submit Score On-chain</button>
+      </div>
+    </section>
+
+    <section class="panel" id="leaderboardPanel">
+      <h3>Top 100 — Leaderboard (Discord names)</h3>
+      <ul id="leaderboardList" class="leaderboard"></ul>
+      <div class="center">
+        <button id="refreshLb" class="secondary">Refresh Leaderboard</button>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div>
+        Admin password: <input id="adminPwd" type="password" placeholder="admin code" />
+        <button id="adminBtn" class="secondary">Admin</button>
+      </div>
+      <div class="muted small">Built for GoKite AI testnet | UI palette: beige / tan / black</div>
+    </footer>
   </div>
 
-  <div id="discord-container" class="hidden">
-    <input id="discordName" placeholder="Enter Discord Username" />
-    <button id="payFeeBtn">Join Quiz (Pay Fee)</button>
-  </div>
-
-  <div id="quiz-container" class="hidden">
-    <div id="quiz"></div>
-    <button id="prevBtn">Previous</button>
-    <button id="nextBtn">Next</button>
-    <button id="submitQuiz">Submit</button>
-  </div>
-
-  <div id="leaderboard-container" class="hidden">
-    <h2>🏆 Leaderboard</h2>
-    <ul id="leaderboard"></ul>
-  </div>
-
-  <!-- ✅ Attempt Status Box -->
-  <div class="attempt-box">
-    <p>🧩 HTML Attempt: <b id="htmlAttempt">1</b></p>
-    <p>🎨 CSS Attempt: <b id="cssAttempt">1</b></p>
-    <p>⚙️ JS Attempt: <b id="jsAttempt">1</b></p>
-  </div>
-
-  <!-- ✅ Load Ethers.js from CDN (MUST COME BEFORE script.js) -->
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
-
-  <!-- ✅ Main Script -->
+  <!-- Main app script (loads after ethers above) -->
   <script src="script.js"></script>
 </body>
 </html>
