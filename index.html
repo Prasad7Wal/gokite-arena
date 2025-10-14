@@ -2,36 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Gokite Arena</title>
+  <title>Universal Wallet Connect</title>
   <link rel="stylesheet" href="style.css">
-  <!-- Ethers.js latest UMD version -->
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.0/dist/ethers.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 </head>
 <body>
   <div class="container">
-    <h1>Gokite Arena</h1>
-    <p id="statusText">Not connected</p>
- 
-    <div class="controls">
-      <button id="connectWalletBtn">Connect Wallet</button>
-      <button id="joinArenaBtn" disabled>Join Arena (0.01 KITE)</button>
-    </div>
-
-    <div id="discordDiv" class="panel hidden">
-      <input type="text" id="discordName" placeholder="Enter Discord Name">
-      <button id="saveDiscordBtn">Start Quiz</button>
-    </div>
-
-    <div id="quizDiv" class="panel hidden">
-      <div id="questionText"></div>
-      <div id="answers"></div>
-    </div>
-
-    <h2>Top 100 Players</h2>
-    <ul id="leaderboard"></ul>
-    <p class="footer">Powered by GoKite AI</p>
+    <h1>💸 Universal Wallet Connector</h1>
+    <button id="connectBtn">🔗 Connect Wallet</button>
+    <p id="walletStatus">Not connected</p>
+    <div id="walletInfo"></div>
   </div>
 
-  <script src="script.js" defer></script>
+  <script src="script.js"></script>
 </body>
 </html>
