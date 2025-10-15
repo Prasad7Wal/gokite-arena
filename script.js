@@ -45,6 +45,7 @@ const finishArea = id("finishArea");
 const leaderboardList = id("leaderboardList");
 const refreshLb = id("refreshLb");
 const adminBtn = id("adminBtn");
+const yourRankArea = id("yourRankArea");
 
 function id(x) { return document.getElementById(x); }
 function setStatus(msg) { statusText.innerText = msg; }
@@ -67,6 +68,14 @@ let chosenAnswers = new Array(questions.length).fill(null);
 
 // UTILITIES
 function shortAddr(a) { return a ? a.slice(0, 6) + "..." + a.slice(-4) : ""; }
+function pickInjectedProvider() {
+  if (!window.ethereum) return null;
+  if (Array.isArray(window.ethereum.providers)) {
+    const mm = window.ethereum.providers.find(p => p.isMetaMask);
+    return mm || window.ethereum.providers[0];
+  }
+  return window.ethereum;
+}
 
 // ---------------- CONNECT ----------------
 async function connectWallet() {
@@ -98,15 +107,6 @@ async function connectWallet() {
     alert("Wallet connect failed: " + (err?.message || err));
     setStatus("❌ Not connected");
   }
-}
-
-function pickInjectedProvider() {
-  if (!window.ethereum) return null;
-  if (Array.isArray(window.ethereum.providers)) {
-    const mm = window.ethereum.providers.find(p => p.isMetaMask);
-    return mm || window.ethereum.providers[0];
-  }
-  return window.ethereum;
 }
 
 // ---------------- JOIN ARENA ----------------
@@ -191,11 +191,8 @@ submitBtn.addEventListener("click", async () => {
 
   try {
     setStatus("⏳ Submitting score...");
-
-    // ✅ Read exact entry fee and send it
     const entryFee = await contract.entryFee();
     const gasEstimate = await contract.estimateGas.submitScore(score, userDiscord, { value: entryFee }).catch(() => 300000);
-
     const tx = await contract.submitScore(score, userDiscord, { value: entryFee, gasLimit: gasEstimate });
     await tx.wait();
 
@@ -214,15 +211,41 @@ submitBtn.addEventListener("click", async () => {
 refreshLb.addEventListener("click", loadLeaderboard);
 async function loadLeaderboard() {
   if (!contract) { setStatus("Contract not initialized"); return; }
+  if (!userDiscord) { setStatus("Connect wallet and set Discord to see rank"); return; }
+
   setStatus("⏳ Loading leaderboard...");
   try {
     const [names, scores] = await contract.topPlayers();
+
+    // Build top 100 list
     leaderboardList.innerHTML = "";
     for (let i = 0; i < Math.min(names.length, 100); i++) {
       const li = document.createElement("li");
       li.textContent = `${i + 1}. ${names[i]} — ${scores[i]} pts`;
+      if (names[i] === userDiscord) li.style.fontWeight = "700"; // highlight user
       leaderboardList.appendChild(li);
     }
+
+    // Find user's rank
+    let userRank = null;
+    for (let i = 0; i < names.length; i++) {
+      if (names[i] === userDiscord) {
+        userRank = i + 1;
+        break;
+      }
+    }
+    yourRankArea.innerText = userRank ? `Your rank: ${userRank}` : "Your rank: Not yet submitted";
+
+    // Auto-scroll to user in leaderboard if outside top 100
+    if (userRank && userRank > 100) {
+      const li = document.createElement("li");
+      li.textContent = `${userRank}. ${userDiscord} — ${scores[userRank - 1]} pts`;
+      li.style.fontWeight = "700";
+      li.style.background = "#f0e3d9";
+      leaderboardList.appendChild(li);
+      li.scrollIntoView({ behavior: "smooth" });
+    }
+
     setStatus("✅ Leaderboard loaded");
   } catch (e) {
     console.error("loadLeaderboard error:", e);
