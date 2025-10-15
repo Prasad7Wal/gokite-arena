@@ -1,7 +1,7 @@
 window.addEventListener("load", async () => {
   try {
     if (!window.ethereum) {
-      alert("MetaMask or Nightly wallet not detected!");
+      alert("MetaMask or compatible wallet not detected!");
       return;
     }
 
@@ -20,7 +20,7 @@ window.addEventListener("load", async () => {
 });
 
 // ---------------- CONFIG ----------------
-const CONTRACT_ADDRESS = "0x7808378770a2e486441e486aa046c715458ba337"; // replace with your deployed contract address
+const CONTRACT_ADDRESS = "0x7808378770a2e486441e486aa046c715458ba337"; // replace with your contract
 const CONTRACT_ABI = [
   "function submitScore(uint256 score, string calldata discord) public payable",
   "function topPlayers() public view returns (string[] memory names, uint256[] memory scores)",
@@ -28,8 +28,8 @@ const CONTRACT_ABI = [
 ];
 // ---------------------------------------
 
-// Question versioning (increment manually when questions update)
-const questionSetId = 1; // CHANGE this number when questions update
+// Question versioning
+const questionSetId = 1;
 
 const statusText = id("statusText");
 const connectBtn = id("connectBtn");
@@ -79,13 +79,12 @@ function pickInjectedProvider() {
   return window.ethereum;
 }
 
-// Check localStorage if user already submitted this question set
+// Check localStorage if user already submitted
 function hasSubmittedBefore() {
   if (!userAddress) return false;
   const key = `submitted_${userAddress}_${questionSetId}`;
   return localStorage.getItem(key) === "true";
 }
-
 function markSubmitted() {
   if (!userAddress) return;
   const key = `submitted_${userAddress}_${questionSetId}`;
@@ -109,13 +108,18 @@ async function connectWallet() {
 
     contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 
-    // Enable join if not already submitted
+    // Enable join if not submitted
     joinBtn.disabled = hasSubmittedBefore();
 
     if (injected.on) {
-      injected.on("accountsChanged", (accounts) => {
+      injected.on("accountsChanged", async (accounts) => {
         if (!accounts.length) { setStatus("Wallet locked"); joinBtn.disabled = true; }
-        else { userAddress = accounts[0]; walletInfo.innerText = `Connected: ${shortAddr(userAddress)}`; joinBtn.disabled = hasSubmittedBefore(); }
+        else { 
+          userAddress = accounts[0]; 
+          walletInfo.innerText = `Connected: ${shortAddr(userAddress)}`; 
+          joinBtn.disabled = hasSubmittedBefore();
+          await loadLeaderboard();
+        }
       });
       injected.on("chainChanged", () => window.location.reload());
     }
@@ -138,15 +142,12 @@ async function joinArena() {
   }
 
   try {
-    setStatus("⏳ Reading entry fee from contract...");
+    setStatus("⏳ Reading entry fee...");
     const entryFee = await contract.entryFee();
     const feeEth = ethers.utils.formatEther(entryFee);
 
     if (entryFee.gt(0)) {
-      if (!confirm(`Entry fee is ${feeEth} KITE. Proceed?`)) {
-        setStatus("Join cancelled");
-        return;
-      }
+      if (!confirm(`Entry fee is ${feeEth} KITE. Proceed?`)) { setStatus("Join cancelled"); return; }
     }
 
     setStatus("⏳ Sending join transaction...");
@@ -237,32 +238,32 @@ submitBtn.addEventListener("click", async () => {
 refreshLb.addEventListener("click", loadLeaderboard);
 async function loadLeaderboard() {
   if (!contract) { setStatus("Contract not initialized"); return; }
-  if (!userDiscord) { setStatus("Connect wallet and set Discord to see rank"); return; }
 
   setStatus("⏳ Loading leaderboard...");
   try {
     const [names, scores] = await contract.topPlayers();
 
-    // Build top 100 list
     leaderboardList.innerHTML = "";
+
+    // Top 100
     for (let i = 0; i < Math.min(names.length, 100); i++) {
       const li = document.createElement("li");
       li.textContent = `${i + 1}. ${names[i]} — ${scores[i]} pts`;
-      if (names[i] === userDiscord) li.style.fontWeight = "700"; // highlight user
+      if (userDiscord && names[i] === userDiscord) li.style.fontWeight = "700";
       leaderboardList.appendChild(li);
     }
 
-    // Find user's rank
+    // Find user rank
     let userRank = null;
     for (let i = 0; i < names.length; i++) {
-      if (names[i] === userDiscord) {
+      if (userDiscord && names[i] === userDiscord) {
         userRank = i + 1;
         break;
       }
     }
     yourRankArea.innerText = userRank ? `Your rank: ${userRank}` : "Your rank: Not yet submitted";
 
-    // Auto-scroll to user if outside top 100
+    // Auto-scroll user if outside top 100
     if (userRank && userRank > 100) {
       const li = document.createElement("li");
       li.textContent = `${userRank}. ${userDiscord} — ${scores[userRank - 1]} pts`;
