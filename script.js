@@ -1,16 +1,17 @@
+// script.js
+
 // ---------------- UTILITIES ----------------
 function id(x){return document.getElementById(x);}
 function setStatus(msg){id("statusText").innerText = msg;}
 function shortAddr(a){return a ? a.slice(0,6) + "..." + a.slice(-4) : "";}
 
 // ---------------- CONFIG ----------------
-const CONTRACT_ADDRESS = "0x7808378770a2e486441e486aa046c715458ba337"; // your contract
+const CONTRACT_ADDRESS = "0x7808378770a2e486441e486aa046c715458ba337";
 const CONTRACT_ABI = [
   "function submitScore(uint256 score, string calldata discord) public payable",
   "function topPlayers() public view returns (string[] memory names, uint256[] memory scores)",
   "function entryFee() public view returns (uint256)"
 ];
-
 const ADMIN_WALLET = "0x4c38A7aB0D6A493Ad209fe9AfD63ca68a3866002";
 
 // ---------------- GLOBAL STATE ----------------
@@ -29,7 +30,7 @@ let questions = [
   {q:"Is GoKite AI L1 for AI?",options:["Yes","No"],correct:0}
 ];
 let currentIndex = 0;
-let chosenAnswers = [];
+let chosenAnswers = new Array(questions.length).fill(null);
 let connectedWallet = null;
 let isAdmin = false;
 let adminList = [ADMIN_WALLET];
@@ -51,6 +52,8 @@ const submitBtn = id("submitBtn");
 const leaderboardList = id("leaderboardList");
 const refreshLb = id("refreshLb");
 const yourRankArea = id("yourRankArea");
+const adminPanel = id("adminPanel");
+const adminVerifyBtn = id("adminVerifyBtn");
 
 // ---------------- LOCAL STORAGE KEYS ----------------
 function discordKey(addr){return `discord_${addr.toLowerCase()}`;}
@@ -84,7 +87,7 @@ async function connectWallet() {
         userAddress = accounts[0];
         walletInfo.innerText = `Connected: ${shortAddr(userAddress)}`;
         userDiscord = localStorage.getItem(discordKey(userAddress)) || "";
-        joinBtn.disabled = localStorage.getItem(submittedKey(userAddress))==="true";
+        joinBtn.disabled = localStorage.getItem(submittedKey(userAddress"))==="true";
         await loadLeaderboard();
       });
       injected.on("chainChanged",()=>window.location.reload());
@@ -124,23 +127,11 @@ async function joinArena() {
 }
 
 // ---------------- QUIZ ----------------
-
-// REPLACE old renderQuestion function with this one
 function renderQuestion(index){
-  // Merge static questions + admin-added questions
-  const adminQuestions = Array.from(document.querySelectorAll("#questionList li")).map(li=>{
-    return {q: li.textContent, options:["Yes","No"], correct:0}; // Admin questions default correct=0, you can enhance
-  });
-  const allQuestions = questions.concat(adminQuestions);
-
-  if(index<0) index=0;
-  if(index>=allQuestions.length) index=allQuestions.length-1;
+  if(index<0)index=0;
+  if(index>=questions.length)index=questions.length-1;
   currentIndex=index;
-  const q=allQuestions[index];
-
-  // Ensure chosenAnswers array matches length
-  if(chosenAnswers.length<allQuestions.length) chosenAnswers.length = allQuestions.length;
-
+  const q=questions[index];
   questionBox.innerText=`Q${index+1}. ${q.q}`;
   answersDiv.innerHTML="";
   q.options.forEach((opt,i)=>{
@@ -156,10 +147,9 @@ function renderQuestion(index){
     answersDiv.appendChild(btn);
   });
   prevQ.style.display=(index===0)?"none":"inline-block";
-  nextQ.style.display=(index===allQuestions.length-1)?"none":"inline-block";
-  finishArea.classList.toggle("hidden", index!==allQuestions.length-1);
+  nextQ.style.display=(index===questions.length-1)?"none":"inline-block";
+  finishArea.classList.toggle("hidden", index!==questions.length-1);
 }
-
 prevQ.addEventListener("click",()=>renderQuestion(currentIndex-1));
 nextQ.addEventListener("click",()=>renderQuestion(currentIndex+1));
 saveDiscordBtn.addEventListener("click",()=>{
@@ -175,19 +165,11 @@ saveDiscordBtn.addEventListener("click",()=>{
 submitBtn.addEventListener("click", async()=>{
   if(!contract){alert("Not connected to contract"); return;}
   if(localStorage.getItem(submittedKey(userAddress))==="true"){alert("Already submitted."); return;}
-
-  // Merge static + admin questions for scoring
-  const adminQuestions = Array.from(document.querySelectorAll("#questionList li")).map(li=>{
-    return {q: li.textContent, options:["Yes","No"], correct:0};
-  });
-  const allQuestions = questions.concat(adminQuestions);
-
   let score=0;
-  for(let i=0;i<allQuestions.length;i++){
-    if(chosenAnswers[i]===allQuestions[i].correct) score+=1;
-    else if(chosenAnswers[i]!==null) score-=1;
+  for(let i=0;i<questions.length;i++){
+    if(chosenAnswers[i]===questions[i].correct)score+=1;
+    else if(chosenAnswers[i]!==null)score-=1;
   }
-
   try {
     setStatus("⏳ Submitting score...");
     const entryFee = await contract.entryFee();
@@ -216,99 +198,99 @@ async function loadLeaderboard(){
     leaderboardList.innerHTML="";
     for(let i=0;i<Math.min(names.length,100);i++){
       const li=document.createElement("li");
-      li.textContent=`${i+1}. ${names[i]} — ${scores[i]} pts`;
-      if(names[i]===userDiscord) li.style.fontWeight="700";
-      leaderboardList.appendChild(li);
-    }
-    let userRank=null;
-    if(userDiscord){
-      for(let i=0;i<names.length;i++){if(names[i]===userDiscord){userRank=i+1; break;}}
-    }
-    yourRankArea.innerText=userRank?`Your rank: ${userRank}`:"Your rank: Not yet submitted";
-    if(userRank && userRank>100){
-      const li=document.createElement("li");
-      li.textContent=`${userRank}. ${userDiscord} — ${scores[userRank-1]} pts`;
-      li.style.fontWeight="700";
-      li.style.background="#f0e3d9";
-      leaderboardList.appendChild(li);
-      li.scrollIntoView({behavior:"smooth"});
-    }
-    setStatus("✅ Leaderboard loaded");
-  } catch(e){
-    console.error("loadLeaderboard error:",e);
-    setStatus("Failed loading leaderboard");
-  }
+li.textContent=${i+1}. ${names[i]} — ${scores[i]} pts;
+if(names[i]===userDiscord)li.style.fontWeight="700";
+leaderboardList.appendChild(li);
+}
+let userRank=null;
+if(userDiscord){
+for(let i=0;i<names.length;i++){if(names[i]===userDiscord){userRank=i+1; break;}}
+}
+yourRankArea.innerText=userRank?Your rank: ${userRank}:"Your rank: Not yet submitted";
+if(userRank && userRank>100){
+const li=document.createElement("li");
+li.textContent=${userRank}. ${userDiscord} — ${scores[userRank-1]} pts;
+li.style.fontWeight="700";
+li.style.background="#f0e3d9";
+leaderboardList.appendChild(li);
+li.scrollIntoView({behavior:"smooth"});
+}
+setStatus("✅ Leaderboard loaded");
+} catch(e){
+console.error("loadLeaderboard error:",e);
+setStatus("Failed loading leaderboard");
+}
 }
 
-// ---------------- ADMIN WALLET ----------------
-async function connectAdminWallet() {
-  if(!window.ethereum){ return alert("Please install MetaMask!"); }
-  try {
-    const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-    connectedWallet = accounts[0].toLowerCase();
-    if(connectedWallet === ADMIN_WALLET.toLowerCase() || adminList.includes(connectedWallet)){
-      isAdmin = true;
-      document.getElementById("adminStatus").textContent="Admin Access Granted ✅";
-      document.getElementById("adminPanel")?.classList.remove("hidden");
-      alert("Admin wallet connected successfully!");
-    } else {
-      alert("This wallet does not have admin rights.");
-      document.getElementById("adminPanel")?.classList.add("hidden");
-    }
-  } catch(e){ console.error("Admin wallet connect failed:",e); }
+// ---------------- ADMIN ----------------
+adminVerifyBtn.addEventListener("click", async()=>{
+if(!window.ethereum) return alert("Install MetaMask first");
+try{
+const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+const wallet = accounts[0].toLowerCase();
+if(wallet === ADMIN_WALLET.toLowerCase() || adminList.includes(wallet)){
+isAdmin = true;
+adminPanel.classList.remove("hidden");
+alert("✅ Admin verified. Dashboard unlocked.");
+} else {
+const code = prompt("Enter Admin password:");
+if(code === "admin code"){
+isAdmin = true;
+adminList.push(wallet);
+adminPanel.classList.remove("hidden");
+alert("✅ Admin verified with code. Dashboard unlocked.");
+} else {
+alert("❌ Not authorized.");
 }
+}
+} catch(e){ console.error(e); alert("Admin verification failed."); }
+});
 
-// ---------------- ADMIN FUNCTIONS ----------------
+// Admin Functions
 function addQuestion() {
-  if(!isAdmin) return alert("Only admin can add questions!");
-  const question = id("newQuestion").value.trim();
-  if(!question) return alert("Please enter a question.");
-  const item = document.createElement("li");
-  item.textContent = question;
-  id("questionList").appendChild(item);
-  id("newQuestion").value="";
-  alert("Question added successfully!");
+if(!isAdmin) return alert("Only admin can add questions!");
+const question = id("newQuestion").value.trim();
+if(!question) return alert("Please enter a question.");
+questions.push({q:question,options:[id("optA").value,id("optB").value],correct:parseInt(id("correctOpt").value)});
+id("newQuestion").value=id("optA").value=id("optB").value=id("correctOpt").value="";
+alert("Question added successfully!");
 }
 
 function updatePlayerScore() {
-  if(!isAdmin) return alert("Only admin can update scores!");
-  const player = id("playerName").value.trim();
-  const score = parseInt(id("playerScore").value);
-  if(!player || isNaN(score)) return alert("Fill player name and score");
-  const row = id("scoreTable").insertRow();
-  row.insertCell(0).innerText = player;
-  row.insertCell(1).innerText = score;
-  alert(`${player}'s score updated.`);
+if(!isAdmin) return alert("Only admin can update scores!");
+const player = id("playerName").value.trim();
+const score = parseInt(id("playerScore").value);
+if(!player || isNaN(score)) return alert("Fill player name and score");
+alert(${player}'s score updated to ${score}. (On-chain update requires contract interaction));
 }
 
 function grantAdminRights() {
-  if(!isAdmin) return alert("Unauthorized");
-  const wallet = prompt("Enter wallet address to grant admin rights:");
-  if(!wallet) return;
-  adminList.push(wallet.toLowerCase());
-  alert(`Granted admin rights to ${wallet}`);
+if(!isAdmin) return alert("Unauthorized");
+const wallet = prompt("Enter wallet address to grant admin rights:");
+if(!wallet) return;
+adminList.push(wallet.toLowerCase());
+alert(Granted admin rights to ${wallet});
 }
 
 function removeAdminRights() {
-  if(!isAdmin) return alert("Unauthorized");
-  const wallet = prompt("Enter wallet address to remove admin rights:");
-  if(!wallet) return;
-  adminList = adminList.filter(a=>a!==wallet.toLowerCase());
-  alert(`Removed admin rights from ${wallet}`);
+if(!isAdmin) return alert("Unauthorized");
+const wallet = prompt("Enter wallet address to remove admin rights:");
+if(!wallet) return;
+adminList = adminList.filter(a=>a!==wallet.toLowerCase());
+alert(Removed admin rights from ${wallet});
 }
 
 // ---------------- INIT ----------------
 (async function init(){
-  setStatus("Ready");
-  joinBtn.disabled=true;
-  discordArea.classList.add("hidden");
-  quizArea.classList.add("hidden");
-  finishArea.classList.add("hidden");
-  connectBtn.addEventListener("click", connectWallet);
-  joinBtn.addEventListener("click", joinArena);
-  id("connectAdminWalletBtn")?.addEventListener("click", connectAdminWallet);
-  id("addQuestionBtn")?.addEventListener("click", addQuestion);
-  id("updateScoreBtn")?.addEventListener("click", updatePlayerScore);
-  id("grantAdminBtn")?.addEventListener("click", grantAdminRights);
-  id("removeAdminBtn")?.addEventListener("click", removeAdminRights);
+setStatus("Ready");
+joinBtn.disabled=true;
+discordArea.classList.add("hidden");
+quizArea.classList.add("hidden");
+finishArea.classList.add("hidden");
+connectBtn.addEventListener("click", connectWallet);
+joinBtn.addEventListener("click", joinArena);
+id("addQuestionBtn")?.addEventListener("click", addQuestion);
+id("updateScoreBtn")?.addEventListener("click", updatePlayerScore);
+id("grantAdminBtn")?.addEventListener("click", grantAdminRights);
+id("removeAdminBtn")?.addEventListener("click", removeAdminRights);
 })();
