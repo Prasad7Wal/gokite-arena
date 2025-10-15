@@ -1,125 +1,61 @@
-/* General page styling */
+/* style.css */
+
+/* General UI */
 body {
-  font-family: "Poppins", sans-serif;
-  background: #0a0a0a;
-  color: #fff;
-  margin: 0;
-  padding: 0;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  font-family: Arial, sans-serif;
+  margin: 20px;
 }
 
-/* Header */
-header {
-  background: linear-gradient(90deg, #007bff, #00bcd4);
-  padding: 15px 20px;
-  text-align: center;
-  font-size: 24px;
-  font-weight: bold;
-  letter-spacing: 1px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+#mainContainer {
+  max-width: 600px;
+  margin: auto;
 }
 
-/* Container */
-.container {
-  flex: 1;
-  padding: 20px;
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-/* Section cards */
-.card {
-  background: #1a1a1a;
-  border-radius: 10px;
-  padding: 20px;
-  margin-bottom: 25px;
-  box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 0 15px rgba(0, 188, 212, 0.5);
-}
-
-/* Buttons */
 button {
-  background: linear-gradient(90deg, #007bff, #00bcd4);
-  border: none;
-  padding: 10px 16px;
-  border-radius: 6px;
-  color: #fff;
-  font-size: 15px;
+  padding: 8px 12px;
+  margin: 5px;
   cursor: pointer;
-  margin-top: 10px;
-  transition: background 0.3s, transform 0.2s;
 }
 
-button:hover {
-  background: linear-gradient(90deg, #00bcd4, #007bff);
-  transform: scale(1.03);
+#discordArea, #quizArea, #finishArea, #adminPanel {
+  margin-top: 15px;
 }
 
-/* Inputs */
-input, select, textarea {
-  width: 100%;
+#discordArea, #quizArea, #finishArea, #adminPanel {
+  border: 1px solid #ccc;
   padding: 10px;
-  border: 1px solid #00bcd4;
-  border-radius: 6px;
-  background: #121212;
-  color: #fff;
-  font-size: 14px;
-  margin-top: 8px;
-  margin-bottom: 12px;
-  box-sizing: border-box;
+  border-radius: 5px;
 }
 
-input:focus, select:focus, textarea:focus {
-  outline: none;
-  border-color: #007bff;
+/* Quiz buttons selected state */
+#answers button.selected {
+  background-color: #4caf50;
+  color: white;
 }
 
-/* Tables */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
+/* Small Admin button */
+.adminBtn {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  font-size: 12px;
+  padding: 5px 10px;
+  background-color: #ff9800;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  z-index: 1000;
 }
 
-table th, table td {
-  border: 1px solid #333;
+/* Hidden class */
+.hidden {
+  display: none !important;
+}
+
+/* Admin panel style */
+#adminPanel {
+  border: 2px solid #444;
   padding: 10px;
-  text-align: center;
-}
-
-table th {
-  background: #007bff;
-}
-
-table tr:nth-child(even) {
-  background: #181818;
-}
-
-/* Footer */
-footer {
-  text-align: center;
-  padding: 15px;
-  background: #111;
-  font-size: 13px;
-  color: #aaa;
-  border-top: 1px solid #222;
-}
-
-/* Admin-only notice */
-.admin-badge {
-  display: inline-block;
-  padding: 6px 10px;
-  background: #ff9800;
-  color: #000;
-  border-radius: 4px;
-  font-weight: bold;
-  font-size: 13px;
-  margin-left: 10px;
+  margin-top: 20px;
+  background: #f9f9f9;
 }
