@@ -1,13 +1,24 @@
 window.addEventListener('load', async () => {
-  if (!window.ethereum) {
-    alert('MetaMask/Nightly Wallet not detected!');
-    return;
+  try {
+    if (!window.ethereum) {
+      alert('MetaMask or Nightly wallet not detected!');
+      return;
+    }
+
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const injected = Array.isArray(window.ethereum.providers)
+      ? (window.ethereum.providers.find(p => p.isMetaMask) || window.ethereum.providers[0])
+      : window.ethereum;
+
+    window.provider = new ethers.providers.Web3Provider(injected, "any");
+    window.signer = window.provider.getSigner();
+    console.log('✅ Wallet injected successfully');
+
+  } catch (err) {
+    console.error('Wallet injection failed:', err);
   }
-  await window.ethereum.request({ method: 'eth_requestAccounts' });
-  window.provider = new ethers.providers.Web3Provider(window.ethereum);
-  window.signer = window.provider.getSigner();
-  console.log('Ethers loaded successfully');
 });
+
  
 // ---------------- CONFIG ----------------
 const CONTRACT_ADDRESS = "0x2779529ca08560a7b977a92879bdd141b2e35ae9";
@@ -124,33 +135,48 @@ async function connectWallet(){
 
 function shortAddr(a){ return a ? a.slice(0,6) + "..." + a.slice(-4) : ""; }
 
-async function joinArena(){
-  if(!contract){ alert("Connect wallet first."); return; }
-  setStatus("⏳ Checking entry fee...");
-  try{
-    let fee = ethers.BigNumber.from(0);
-    try{ fee = await contract.entryFee(); }catch(e){ console.warn("entryFee failed, using 0"); }
+async function joinArena() {
+  if (!contract) {
+    alert("Connect wallet first.");
+    return;
+  }
 
-    if(fee.gt(0)){
-      const feeEth = ethers.utils.formatEther(fee);
-      if(!confirm(`Entry fee ${feeEth} KITE. Pay and join?`)){ setStatus("Join cancelled"); return; }
+  setStatus("⏳ Checking entry fee...");
+  try {
+    let fee;
+    try {
+      fee = await contract.entryFee();
+    } catch (e) {
+      console.warn("entryFee failed, using 0");
+      fee = ethers.BigNumber.from(0);
     }
 
- setStatus("⏳ Sending join transaction (with contract entry fee)...");
-const fee = await contract.entryFee(); // get fee dynamically
+    if (fee.gt(0)) {
+      const feeEth = ethers.utils.formatEther(fee);
+      if (!confirm(`Entry fee ${feeEth} KITE. Pay and join?`)) {
+        setStatus("Join cancelled");
+        return;
+      }
+    }
 
-// estimate gas for safety
-const gasEstimate = await contract.estimateGas.submitScore(1, "joining", { value: fee });
+    setStatus("⏳ Sending join transaction (with contract entry fee)...");
 
-// send tx with estimated gas and exact fee
-const tx = await contract.submitScore(1, "joining", { value: fee, gasLimit: gasEstimate });
-await tx.wait();
+    // estimate gas safely
+    const gasEstimate = await contract.estimateGas.submitScore(1, "joining", { value: fee });
 
-setStatus("✅ Joined arena — enter Discord name");
-discordArea.classList.remove("hidden");
-joinBtn.disabled = true;
+    // send tx with estimated gas and fee
+    const tx = await contract.submitScore(1, "joining", {
+      value: fee,
+      gasLimit: gasEstimate,
+    });
 
-  }catch(e){
+    await tx.wait();
+
+    setStatus("✅ Joined arena — enter Discord name");
+    discordArea.classList.remove("hidden");
+    joinBtn.disabled = true;
+
+  } catch (e) {
     console.error("joinArena error:", e);
     alert("Join failed: " + (e?.error?.message || e?.data?.message || e?.message || e));
     setStatus("❌ Join failed");
