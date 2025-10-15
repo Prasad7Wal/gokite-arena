@@ -6,7 +6,9 @@
   --muted: #6b665f;
   --white: #ffffff;
 }
+
 *{box-sizing:border-box}
+
 body{
   margin:0;
   background: linear-gradient(180deg,var(--bg), #e6dfd4);
@@ -15,34 +17,130 @@ body{
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
 }
-.container{max-width:980px;margin:28px auto;padding:18px}
-.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-.title{font-weight:700;font-size:20px}
-.accent{color:var(--accent)}
-.status{font-size:13px;color:var(--muted)}
-.panel{background:var(--card);padding:18px;border-radius:10px;box-shadow:0 6px 18px rgba(11,11,11,0.06);margin-bottom:14px}
+
+.container{
+  max-width:980px;
+  margin:28px auto;
+  padding:18px;
+}
+
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:14px;
+}
+
+.title{
+  font-weight:700;
+  font-size:20px;
+}
+
+.accent{
+  color:var(--accent);
+}
+
+.status{
+  font-size:13px;
+  color:var(--muted);
+}
+
+.panel{
+  background:var(--card);
+  padding:18px;
+  border-radius:10px;
+  box-shadow:0 6px 18px rgba(11,11,11,0.06);
+  margin-bottom:14px;
+}
+
 .center{text-align:center}
+
 .primary{
   background:linear-gradient(180deg,var(--accent),#7a5b4d);
   color:var(--white);
-  border:none;padding:10px 16px;border-radius:10px;font-weight:700;cursor:pointer;margin:6px;
+  border:none;
+  padding:10px 16px;
+  border-radius:10px;
+  font-weight:700;
+  cursor:pointer;
+  margin:6px;
+  transition: transform 0.1s, opacity 0.2s;
 }
+
+.primary:hover:not(:disabled){transform: translateY(-1px);}
+.primary:disabled{opacity:0.5;cursor:not-allowed;}
+
 .secondary{
-  background:transparent;border:1px solid var(--muted);padding:8px 12px;border-radius:8px;cursor:pointer;margin:6px;
+  background:transparent;
+  border:1px solid var(--muted);
+  padding:8px 12px;
+  border-radius:8px;
+  cursor:pointer;
+  margin:6px;
+  transition: background 0.2s;
 }
-.primary:disabled{opacity:0.5;cursor:not-allowed}
+
+.secondary:hover{background: rgba(139,109,92,0.1);}
+
 .hidden{display:none}
 .muted{color:var(--muted);font-size:13px;margin-top:8px}
 .small{font-size:12px}
-.questionBox{font-weight:700;font-size:18px;margin:16px 0}
-.answers{display:flex;flex-direction:column;gap:10px}
-.answers button{background:white;border:1px solid #ddd;padding:10px;border-radius:8px;text-align:left;cursor:pointer}
-.answers button.selected{background:linear-gradient(180deg,#f0e3d9,#ead8c8);border-color:var(--accent)}
-.leaderboard{list-style:none;padding-left:0;max-height:360px;overflow:auto;margin:0}
-.leaderboard li{padding:8px;border-bottom:1px dashed rgba(0,0,0,0.03)}
-.footer{display:flex;justify-content:space-between;align-items:center;padding:10px 0;font-size:13px}
+
+.questionBox{
+  font-weight:700;
+  font-size:18px;
+  margin:16px 0;
+}
+
+.answers{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.answers button{
+  background:white;
+  border:1px solid #ddd;
+  padding:10px;
+  border-radius:8px;
+  text-align:left;
+  cursor:pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.answers button:hover{background:#f9f5f1;}
+.answers button.selected{
+  background:linear-gradient(180deg,#f0e3d9,#ead8c8);
+  border-color:var(--accent);
+}
+
+.leaderboard{
+  list-style:none;
+  padding-left:0;
+  max-height:360px;
+  overflow:auto;
+  margin:0;
+}
+
+.leaderboard li{
+  padding:8px;
+  border-bottom:1px dashed rgba(0,0,0,0.03);
+}
+
+.footer{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 0;
+  font-size:13px;
+}
+
 input[type="text"], input[type="password"], input[type="number"]{
-  padding:8px;border-radius:8px;border:1px solid #ddd;max-width:320px;width:100%;
+  padding:8px;
+  border-radius:8px;
+  border:1px solid #ddd;
+  max-width:320px;
+  width:100%;
 }
 
 /* ---------------- Your Rank Styling ---------------- */
@@ -60,13 +158,11 @@ input[type="text"], input[type="password"], input[type="number"]{
   text-align: center;
 }
 
-/* Slight hover pop effect (optional) */
 #yourRankArea:hover {
   background: #f5e6d8;
   transform: translateY(-1px);
 }
 
-/* Rank highlight if user is in top 10 */
 #yourRankArea.top-rank {
   background: linear-gradient(90deg, #ffd700, #ffb200);
   color: #0b0b0b;
