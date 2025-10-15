@@ -20,10 +20,10 @@ window.addEventListener("load", async () => {
 });
 
 // ---------------- CONFIG ----------------
-const CONTRACT_ADDRESS = "0x2779529ca08560a7b977a92879bdd141b2e35ae9";
+const CONTRACT_ADDRESS = "0x7808378770a2e486441e486aa046c715458ba337"; // replace with your deployed contract address
 const CONTRACT_ABI = [
   "function submitScore(uint256 score, string calldata discord) public payable",
-  "function getLeaderboard() public view returns (string[] memory names, uint256[] memory scores)",
+  "function topPlayers() public view returns (string[] memory names, uint256[] memory scores)",
   "function entryFee() public view returns (uint256)"
 ];
 // ---------------------------------------
@@ -68,37 +68,14 @@ let chosenAnswers = new Array(questions.length).fill(null);
 // UTILITIES
 function shortAddr(a) { return a ? a.slice(0, 6) + "..." + a.slice(-4) : ""; }
 
-async function waitForEthers(timeout = 3000) {
-  const interval = 150;
-  const max = Math.ceil(timeout / interval);
-  for (let i = 0; i < max; i++) {
-    if (typeof window.ethers !== "undefined") return true;
-    await new Promise(r => setTimeout(r, interval));
-  }
-  return typeof window.ethers !== "undefined";
-}
-
-function pickInjectedProvider() {
-  if (!window.ethereum) return null;
-  if (Array.isArray(window.ethereum.providers)) {
-    const mm = window.ethereum.providers.find(p => p.isMetaMask);
-    return mm || window.ethereum.providers[0];
-  }
-  return window.ethereum;
-}
-
 // ---------------- CONNECT ----------------
 async function connectWallet() {
   try {
     setStatus("🔍 Detecting wallets...");
-    const haveEthers = await waitForEthers();
-    if (!haveEthers) { alert("Ethers.js missing."); return; }
-
     const injected = pickInjectedProvider();
     if (!injected) { alert("No wallet found."); return; }
 
     await injected.request({ method: "eth_requestAccounts" });
-
     provider = new ethers.providers.Web3Provider(injected, "any");
     signer = provider.getSigner();
     userAddress = await signer.getAddress();
@@ -123,18 +100,23 @@ async function connectWallet() {
   }
 }
 
+function pickInjectedProvider() {
+  if (!window.ethereum) return null;
+  if (Array.isArray(window.ethereum.providers)) {
+    const mm = window.ethereum.providers.find(p => p.isMetaMask);
+    return mm || window.ethereum.providers[0];
+  }
+  return window.ethereum;
+}
+
 // ---------------- JOIN ARENA ----------------
 async function joinArena() {
-  if (!contract) {
-    alert("Connect wallet first.");
-    return;
-  }
+  if (!contract) { alert("Connect wallet first."); return; }
 
   try {
     setStatus("⏳ Reading entry fee from contract...");
     const entryFee = await contract.entryFee();
     const feeEth = ethers.utils.formatEther(entryFee);
-    console.log("Contract Fee:", feeEth);
 
     if (entryFee.gt(0)) {
       if (!confirm(`Entry fee is ${feeEth} KITE. Proceed?`)) {
@@ -143,29 +125,17 @@ async function joinArena() {
       }
     }
 
-    setStatus("⛽ Estimating gas...");
-    let gasEstimate;
-    try {
-      gasEstimate = await contract.estimateGas.submitScore(1, "joining", { value: entryFee });
-    } catch {
-      gasEstimate = 300000;
-      console.warn("Gas estimate failed, using fallback:", gasEstimate);
-    }
-
     setStatus("⏳ Sending join transaction...");
-    const tx = await contract.submitScore(1, "joining", {
-      value: entryFee,
-      gasLimit: gasEstimate
-    });
-
+    const gasEstimate = await contract.estimateGas.submitScore(1, "joining", { value: entryFee }).catch(() => 300000);
+    const tx = await contract.submitScore(1, "joining", { value: entryFee, gasLimit: gasEstimate });
     await tx.wait();
+
     setStatus("✅ Joined arena — enter Discord name");
     discordArea.classList.remove("hidden");
     joinBtn.disabled = true;
-
   } catch (e) {
     console.error("joinArena error:", e);
-    alert("Join failed: " + (e?.error?.message || e?.data?.message || e?.message || e));
+    alert("Join failed: " + (e?.error?.message || e?.message || "See console"));
     setStatus("❌ Join failed");
   }
 }
@@ -221,8 +191,14 @@ submitBtn.addEventListener("click", async () => {
 
   try {
     setStatus("⏳ Submitting score...");
-    const tx = await contract.submitScore(score, userDiscord, { value: 0 });
+
+    // ✅ Read exact entry fee and send it
+    const entryFee = await contract.entryFee();
+    const gasEstimate = await contract.estimateGas.submitScore(score, userDiscord, { value: entryFee }).catch(() => 300000);
+
+    const tx = await contract.submitScore(score, userDiscord, { value: entryFee, gasLimit: gasEstimate });
     await tx.wait();
+
     setStatus("✅ Score submitted!");
     await loadLeaderboard();
     quizArea.classList.add("hidden");
@@ -240,9 +216,7 @@ async function loadLeaderboard() {
   if (!contract) { setStatus("Contract not initialized"); return; }
   setStatus("⏳ Loading leaderboard...");
   try {
-    const res = await contract.getLeaderboard();
-    const names = res[0] || [];
-    const scores = res[1] || [];
+    const [names, scores] = await contract.topPlayers();
     leaderboardList.innerHTML = "";
     for (let i = 0; i < Math.min(names.length, 100); i++) {
       const li = document.createElement("li");
