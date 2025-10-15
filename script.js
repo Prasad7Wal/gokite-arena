@@ -29,7 +29,7 @@ let questions = [
   {q:"Is GoKite AI L1 for AI?",options:["Yes","No"],correct:0}
 ];
 let currentIndex = 0;
-let chosenAnswers = new Array(questions.length).fill(null);
+let chosenAnswers = [];
 let connectedWallet = null;
 let isAdmin = false;
 let adminList = [ADMIN_WALLET];
@@ -124,11 +124,23 @@ async function joinArena() {
 }
 
 // ---------------- QUIZ ----------------
+
+// REPLACE old renderQuestion function with this one
 function renderQuestion(index){
-  if(index<0)index=0;
-  if(index>=questions.length)index=questions.length-1;
+  // Merge static questions + admin-added questions
+  const adminQuestions = Array.from(document.querySelectorAll("#questionList li")).map(li=>{
+    return {q: li.textContent, options:["Yes","No"], correct:0}; // Admin questions default correct=0, you can enhance
+  });
+  const allQuestions = questions.concat(adminQuestions);
+
+  if(index<0) index=0;
+  if(index>=allQuestions.length) index=allQuestions.length-1;
   currentIndex=index;
-  const q=questions[index];
+  const q=allQuestions[index];
+
+  // Ensure chosenAnswers array matches length
+  if(chosenAnswers.length<allQuestions.length) chosenAnswers.length = allQuestions.length;
+
   questionBox.innerText=`Q${index+1}. ${q.q}`;
   answersDiv.innerHTML="";
   q.options.forEach((opt,i)=>{
@@ -144,9 +156,10 @@ function renderQuestion(index){
     answersDiv.appendChild(btn);
   });
   prevQ.style.display=(index===0)?"none":"inline-block";
-  nextQ.style.display=(index===questions.length-1)?"none":"inline-block";
-  finishArea.classList.toggle("hidden", index!==questions.length-1);
+  nextQ.style.display=(index===allQuestions.length-1)?"none":"inline-block";
+  finishArea.classList.toggle("hidden", index!==allQuestions.length-1);
 }
+
 prevQ.addEventListener("click",()=>renderQuestion(currentIndex-1));
 nextQ.addEventListener("click",()=>renderQuestion(currentIndex+1));
 saveDiscordBtn.addEventListener("click",()=>{
@@ -162,11 +175,19 @@ saveDiscordBtn.addEventListener("click",()=>{
 submitBtn.addEventListener("click", async()=>{
   if(!contract){alert("Not connected to contract"); return;}
   if(localStorage.getItem(submittedKey(userAddress))==="true"){alert("Already submitted."); return;}
+
+  // Merge static + admin questions for scoring
+  const adminQuestions = Array.from(document.querySelectorAll("#questionList li")).map(li=>{
+    return {q: li.textContent, options:["Yes","No"], correct:0};
+  });
+  const allQuestions = questions.concat(adminQuestions);
+
   let score=0;
-  for(let i=0;i<questions.length;i++){
-    if(chosenAnswers[i]===questions[i].correct)score+=1;
-    else if(chosenAnswers[i]!==null)score-=1;
+  for(let i=0;i<allQuestions.length;i++){
+    if(chosenAnswers[i]===allQuestions[i].correct) score+=1;
+    else if(chosenAnswers[i]!==null) score-=1;
   }
+
   try {
     setStatus("⏳ Submitting score...");
     const entryFee = await contract.entryFee();
@@ -196,7 +217,7 @@ async function loadLeaderboard(){
     for(let i=0;i<Math.min(names.length,100);i++){
       const li=document.createElement("li");
       li.textContent=`${i+1}. ${names[i]} — ${scores[i]} pts`;
-      if(names[i]===userDiscord)li.style.fontWeight="700";
+      if(names[i]===userDiscord) li.style.fontWeight="700";
       leaderboardList.appendChild(li);
     }
     let userRank=null;
