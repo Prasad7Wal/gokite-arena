@@ -11,6 +11,9 @@ const CONTRACT_ABI = [
   "function entryFee() public view returns (uint256)"
 ];
 
+const ADMIN_WALLET = "0x4c38A7aB0D6A493Ad209fe9AfD63ca68a3866002";
+
+// ---------------- GLOBAL STATE ----------------
 let provider, signer, contract;
 let userAddress, userDiscord = "";
 let questions = [
@@ -27,6 +30,9 @@ let questions = [
 ];
 let currentIndex = 0;
 let chosenAnswers = new Array(questions.length).fill(null);
+let connectedWallet = null;
+let isAdmin = false;
+let adminList = [ADMIN_WALLET];
 
 // ---------------- DOM ----------------
 const connectBtn = id("connectBtn");
@@ -50,32 +56,31 @@ const yourRankArea = id("yourRankArea");
 function discordKey(addr){return `discord_${addr.toLowerCase()}`;}
 function submittedKey(addr){return `submitted_${addr.toLowerCase()}`;}
 
-// ---------------- CONNECT WALLET ----------------
-async function connectWallet(){
-  try{
-    setStatus("🔍 Detecting wallets...");
+// ---------------- PLAYER WALLET ----------------
+async function connectWallet() {
+  try {
+    setStatus("🔍 Detecting wallet...");
     const injected = window.ethereum || (Array.isArray(window.ethereum?.providers) ? window.ethereum.providers.find(p=>p.isMetaMask) : null);
-    if(!injected){alert("No wallet found.");return;}
+    if(!injected){alert("No wallet found."); return;}
     await injected.request({method:"eth_requestAccounts"});
     provider = new ethers.providers.Web3Provider(injected,"any");
     signer = provider.getSigner();
     userAddress = await signer.getAddress();
     walletInfo.innerText = `Connected: ${shortAddr(userAddress)}`;
     setStatus(`✅ Connected: ${shortAddr(userAddress)}`);
-    contract = new ethers.Contract(CONTRACT_ADDRESS,CONTRACT_ABI,signer);
+    contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 
-    // Load Discord from localStorage if exists
+    // Load Discord
     const storedDiscord = localStorage.getItem(discordKey(userAddress));
     if(storedDiscord){userDiscord = storedDiscord;}
 
     // Enable join only if not submitted
-    const alreadySubmitted = localStorage.getItem(submittedKey(userAddress)) === "true";
-    joinBtn.disabled = alreadySubmitted;
+    joinBtn.disabled = localStorage.getItem(submittedKey(userAddress))==="true";
 
-    // Event listeners
+    // Wallet event listeners
     if(injected.on){
-      injected.on("accountsChanged",async accounts=>{
-        if(!accounts.length){setStatus("Wallet locked");joinBtn.disabled=true;return;}
+      injected.on("accountsChanged", async accounts=>{
+        if(!accounts.length){setStatus("Wallet locked"); joinBtn.disabled=true; return;}
         userAddress = accounts[0];
         walletInfo.innerText = `Connected: ${shortAddr(userAddress)}`;
         userDiscord = localStorage.getItem(discordKey(userAddress)) || "";
@@ -86,7 +91,7 @@ async function connectWallet(){
     }
 
     await loadLeaderboard();
-  }catch(err){
+  } catch(err){
     console.error("connectWallet failed:",err);
     alert("Wallet connect failed: "+(err?.message||err));
     setStatus("❌ Not connected");
@@ -94,31 +99,25 @@ async function connectWallet(){
 }
 
 // ---------------- JOIN ARENA ----------------
-async function joinArena(){
-  if(!contract){alert("Connect wallet first.");return;}
-  if(localStorage.getItem(submittedKey(userAddress))==="true"){
-    alert("You already submitted this question set.");
-    return;
-  }
-  try{
+async function joinArena() {
+  if(!contract){alert("Connect wallet first."); return;}
+  if(localStorage.getItem(submittedKey(userAddress))==="true"){alert("You already submitted."); return;}
+  try {
     setStatus("⏳ Reading entry fee...");
     const entryFee = await contract.entryFee();
-    const feeEth = ethers.utils.formatEther(entryFee);
     if(entryFee.gt(0)){
-      if(!confirm(`Entry fee is ${feeEth} KITE. Proceed?`)){
-        setStatus("Join cancelled");
-        return;
-      }
+      const feeEth = ethers.utils.formatEther(entryFee);
+      if(!confirm(`Entry fee is ${feeEth} KITE. Proceed?`)){ setStatus("Join cancelled"); return;}
     }
     setStatus("⏳ Sending join transaction...");
     const gasEstimate = await contract.estimateGas.submitScore(1,"joining",{value:entryFee}).catch(()=>300000);
-    const tx = await contract.submitScore(1,"joining",{value:entryFee,gasLimit:gasEstimate});
+    const tx = await contract.submitScore(1,"joining",{value:entryFee, gasLimit:gasEstimate});
     await tx.wait();
     setStatus("✅ Joined arena — enter Discord name");
     discordArea.classList.remove("hidden");
     joinBtn.disabled = true;
-  }catch(e){
-    console.error("joinArena error:",e);
+  } catch(e){
+    console.error("joinArena error:", e);
     alert("Join failed: "+(e?.error?.message||e?.message||"See console"));
     setStatus("❌ Join failed");
   }
@@ -146,15 +145,13 @@ function renderQuestion(index){
   });
   prevQ.style.display=(index===0)?"none":"inline-block";
   nextQ.style.display=(index===questions.length-1)?"none":"inline-block";
-  finishArea.classList.toggle("hidden",index!==questions.length-1);
+  finishArea.classList.toggle("hidden", index!==questions.length-1);
 }
-
 prevQ.addEventListener("click",()=>renderQuestion(currentIndex-1));
 nextQ.addEventListener("click",()=>renderQuestion(currentIndex+1));
-
 saveDiscordBtn.addEventListener("click",()=>{
-  const v=discordInput.value.trim();
-  if(!v){alert("Enter Discord name");return;}
+  const v = discordInput.value.trim();
+  if(!v){alert("Enter Discord name"); return;}
   userDiscord=v;
   localStorage.setItem(discordKey(userAddress),v);
   discordArea.classList.add("hidden");
@@ -162,28 +159,26 @@ saveDiscordBtn.addEventListener("click",()=>{
   renderQuestion(0);
   setStatus("Quiz started");
 });
-
-// ---------------- SUBMIT SCORE ----------------
-submitBtn.addEventListener("click",async()=>{
-  if(!contract){alert("Not connected to contract");return;}
-  if(localStorage.getItem(submittedKey(userAddress))==="true"){alert("You already submitted.");return;}
+submitBtn.addEventListener("click", async()=>{
+  if(!contract){alert("Not connected to contract"); return;}
+  if(localStorage.getItem(submittedKey(userAddress))==="true"){alert("Already submitted."); return;}
   let score=0;
   for(let i=0;i<questions.length;i++){
     if(chosenAnswers[i]===questions[i].correct)score+=1;
     else if(chosenAnswers[i]!==null)score-=1;
   }
-  try{
+  try {
     setStatus("⏳ Submitting score...");
     const entryFee = await contract.entryFee();
     const gasEstimate = await contract.estimateGas.submitScore(score,userDiscord,{value:entryFee}).catch(()=>300000);
-    const tx = await contract.submitScore(score,userDiscord,{value:entryFee,gasLimit:gasEstimate});
+    const tx = await contract.submitScore(score,userDiscord,{value:entryFee, gasLimit:gasEstimate});
     await tx.wait();
     setStatus("✅ Score submitted!");
     localStorage.setItem(submittedKey(userAddress),"true");
     await loadLeaderboard();
     quizArea.classList.add("hidden");
     finishArea.classList.add("hidden");
-  }catch(e){
+  } catch(e){
     console.error("submit error:",e);
     alert("Transaction failed: "+(e?.error?.message||e?.message||"See console"));
     setStatus("❌ Submit failed");
@@ -191,9 +186,9 @@ submitBtn.addEventListener("click",async()=>{
 });
 
 // ---------------- LEADERBOARD ----------------
-refreshLb.addEventListener("click",loadLeaderboard);
+refreshLb.addEventListener("click", loadLeaderboard);
 async function loadLeaderboard(){
-  if(!contract){setStatus("Contract not initialized");return;}
+  if(!contract){setStatus("Contract not initialized"); return;}
   setStatus("⏳ Loading leaderboard...");
   try{
     const [names,scores] = await contract.topPlayers();
@@ -204,15 +199,11 @@ async function loadLeaderboard(){
       if(names[i]===userDiscord)li.style.fontWeight="700";
       leaderboardList.appendChild(li);
     }
-    // Compute user's rank
     let userRank=null;
     if(userDiscord){
-      for(let i=0;i<names.length;i++){
-        if(names[i]===userDiscord){userRank=i+1;break;}
-      }
+      for(let i=0;i<names.length;i++){if(names[i]===userDiscord){userRank=i+1; break;}}
     }
     yourRankArea.innerText=userRank?`Your rank: ${userRank}`:"Your rank: Not yet submitted";
-    // If user outside top 100
     if(userRank && userRank>100){
       const li=document.createElement("li");
       li.textContent=`${userRank}. ${userDiscord} — ${scores[userRank-1]} pts`;
@@ -222,10 +213,67 @@ async function loadLeaderboard(){
       li.scrollIntoView({behavior:"smooth"});
     }
     setStatus("✅ Leaderboard loaded");
-  }catch(e){
+  } catch(e){
     console.error("loadLeaderboard error:",e);
     setStatus("Failed loading leaderboard");
   }
+}
+
+// ---------------- ADMIN WALLET ----------------
+async function connectAdminWallet() {
+  if(!window.ethereum){ return alert("Please install MetaMask!"); }
+  try {
+    const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+    connectedWallet = accounts[0].toLowerCase();
+    if(connectedWallet === ADMIN_WALLET.toLowerCase() || adminList.includes(connectedWallet)){
+      isAdmin = true;
+      document.getElementById("adminStatus").textContent="Admin Access Granted ✅";
+      document.getElementById("adminPanel")?.classList.remove("hidden");
+      alert("Admin wallet connected successfully!");
+    } else {
+      alert("This wallet does not have admin rights.");
+      document.getElementById("adminPanel")?.classList.add("hidden");
+    }
+  } catch(e){ console.error("Admin wallet connect failed:",e); }
+}
+
+// ---------------- ADMIN FUNCTIONS ----------------
+function addQuestion() {
+  if(!isAdmin) return alert("Only admin can add questions!");
+  const question = id("newQuestion").value.trim();
+  if(!question) return alert("Please enter a question.");
+  const item = document.createElement("li");
+  item.textContent = question;
+  id("questionList").appendChild(item);
+  id("newQuestion").value="";
+  alert("Question added successfully!");
+}
+
+function updatePlayerScore() {
+  if(!isAdmin) return alert("Only admin can update scores!");
+  const player = id("playerName").value.trim();
+  const score = parseInt(id("playerScore").value);
+  if(!player || isNaN(score)) return alert("Fill player name and score");
+  const row = id("scoreTable").insertRow();
+  row.insertCell(0).innerText = player;
+  row.insertCell(1).innerText = score;
+  alert(`${player}'s score updated.`);
+}
+
+function grantAdminRights() {
+  if(!isAdmin) return alert("Unauthorized");
+  const wallet = prompt("Enter wallet address to grant admin rights:");
+  if(!wallet) return;
+  adminList.push(wallet.toLowerCase());
+  alert(`Granted admin rights to ${wallet}`);
+}
+
+function removeAdminRights() {
+  if(!isAdmin) return alert("Unauthorized");
+  const wallet = prompt("Enter wallet address to remove admin rights:");
+  if(!wallet) return;
+  adminList = adminList.filter(a=>a!==wallet.toLowerCase());
+  alert(`Removed admin rights from ${wallet}`);
 }
 
 // ---------------- INIT ----------------
@@ -235,6 +283,11 @@ async function loadLeaderboard(){
   discordArea.classList.add("hidden");
   quizArea.classList.add("hidden");
   finishArea.classList.add("hidden");
-  connectBtn.addEventListener("click",connectWallet);
-  joinBtn.addEventListener("click",joinArena);
+  connectBtn.addEventListener("click", connectWallet);
+  joinBtn.addEventListener("click", joinArena);
+  id("connectAdminWalletBtn")?.addEventListener("click", connectAdminWallet);
+  id("addQuestionBtn")?.addEventListener("click", addQuestion);
+  id("updateScoreBtn")?.addEventListener("click", updatePlayerScore);
+  id("grantAdminBtn")?.addEventListener("click", grantAdminRights);
+  id("removeAdminBtn")?.addEventListener("click", removeAdminRights);
 })();
