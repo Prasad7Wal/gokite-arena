@@ -50,13 +50,33 @@
 
     <section class="panel" id="leaderboardPanel">
       <h3>Top 100 — Leaderboard (Discord names)</h3>
-
-      <!-- Your Rank Display -->
       <div id="yourRankArea" class="muted small center" style="margin-bottom:8px;">Your rank: Not yet submitted</div>
-
       <ul id="leaderboardList" class="leaderboard"></ul>
       <div class="center">
         <button id="refreshLb" class="secondary">Refresh Leaderboard</button>
+      </div>
+    </section>
+
+    <!-- Admin Panel -->
+    <section class="panel hidden" id="adminPanel">
+      <h3>Admin Panel 🔑</h3>
+      <div class="subpanel">
+        <h4>Adjust Player Score</h4>
+        <input id="adminPlayerDiscord" placeholder="Discord name" />
+        <input id="adminNewScore" placeholder="New score" type="number" />
+        <button id="adminUpdateScoreBtn" class="secondary">Update Score</button>
+      </div>
+      <div class="subpanel">
+        <h4>Manage Questions</h4>
+        <input id="adminQuestionText" placeholder="Question text" />
+        <input id="adminOptionA" placeholder="Option A" />
+        <input id="adminOptionB" placeholder="Option B" />
+        <input id="adminCorrectOption" placeholder="Correct option index (0 or 1)" />
+        <button id="adminAddQuestionBtn" class="secondary">Add Question</button>
+      </div>
+      <div class="subpanel">
+        <button id="adminRefreshLb" class="secondary">Refresh Leaderboard</button>
+        <button id="adminResetQuiz" class="secondary">Reset Quiz</button>
       </div>
     </section>
 
@@ -69,7 +89,7 @@
     </footer>
   </div>
 
-  <!-- Main app script (loads after ethers above) -->
+  <!-- Main app script -->
   <script src="script.js"></script>
 </body>
 </html>
