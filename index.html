@@ -1,94 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GoKite AI X Prasad_713</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GoKite AI X Prasad_713. — Quiz Arena</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- IMPORTANT: ethers must load BEFORE script.js -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 </head>
 <body>
+  <div class="container">
+    <header class="topbar">
+      <div class="title">GoKite AI X <span class="accent">Prasad_713.</span></div>
+      <div id="statusLine" class="status">Status: <span id="statusText">Idle</span></div>
+    </header>
 
-<div id="mainContainer">
-  <h1>GoKite AI X Prasad_713</h1>
+    <section class="panel" id="mainPanel">
+      <div class="center">
+        <button id="connectBtn" class="primary">Connect Wallet</button>
+        <button id="joinBtn" class="primary" disabled>Join Arena (pay entry)</button>
+      </div>
 
-  <div id="statusText">Status: Ready</div>
+      <div id="walletInfo" class="muted"></div>
 
-  <!-- Wallet / Join -->
-  <div id="walletSection">
-    <button id="connectBtn">Connect Wallet</button>
-    <button id="joinBtn">Join Arena (pay entry)</button>
-    <div id="walletInfo"></div>
+      <div id="discordArea" class="hidden">
+        <label>Discord name (visible on leaderboard)</label>
+        <input id="discordInput" placeholder="discord_user#1234" />
+        <div class="center">
+          <button id="saveDiscordBtn" class="primary">Save & Start Quiz</button>
+        </div>
+      </div>
+
+      <div id="quizArea" class="hidden">
+        <div id="questionBox" class="questionBox"></div>
+        <div id="answers" class="answers"></div>
+        <div class="center">
+          <button id="prevQ" class="secondary">Previous</button>
+          <button id="nextQ" class="secondary">Next</button>
+        </div>
+      </div>
+
+      <div id="finishArea" class="hidden center">
+        <button id="submitBtn" class="primary">Submit Score On-chain</button>
+      </div>
+    </section>
+
+    <section class="panel" id="leaderboardPanel">
+      <h3>Top 100 — Leaderboard (Discord names)</h3>
+
+      <!-- Your Rank Display -->
+      <div id="yourRankArea" class="muted small center" style="margin-bottom:8px;">Your rank: Not yet submitted</div>
+
+      <ul id="leaderboardList" class="leaderboard"></ul>
+      <div class="center">
+        <button id="refreshLb" class="secondary">Refresh Leaderboard</button>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div>
+        Admin password: <input id="adminPwd" type="password" placeholder="admin code" />
+        <button id="adminBtn" class="secondary">Admin</button>
+      </div>
+      <div class="muted small">Built for GoKite AI testnet | UI palette: beige / tan / black</div>
+    </footer>
   </div>
 
-  <!-- Discord -->
-  <div id="discordArea">
-    <label>Discord name (visible on leaderboard)</label>
-    <input id="discordInput" placeholder="discord_user#1234">
-    <button id="saveDiscordBtn">Save & Start Quiz</button>
-  </div>
-
-  <!-- Quiz -->
-  <div id="quizArea">
-    <div id="questionBox"></div>
-    <div id="answers"></div>
-    <button id="prevQ">Previous</button>
-    <button id="nextQ">Next</button>
-    <div id="finishArea">
-      <button id="submitBtn">Submit Score On-chain</button>
-    </div>
-  </div>
-
-  <!-- Leaderboard -->
-  <div id="leaderboardSection">
-    <h3>Top 100 — Leaderboard (Discord names)</h3>
-    <ul id="leaderboardList"></ul>
-    <div id="yourRankArea">Your rank: Not yet submitted</div>
-    <button id="refreshLb">Refresh Leaderboard</button>
-  </div>
-
-</div>
-
-<!-- Small Admin button (always visible but non-intrusive) -->
-<button id="adminVerifyBtn" class="adminBtn">Admin 🔑</button>
-
-<!-- Admin Panel (hidden by default) -->
-<div id="adminPanel" class="hidden">
-  <h3>Admin Panel 🔑</h3>
-
-  <!-- Adjust Player Score -->
-  <div>
-    <h4>Adjust Player Score</h4>
-    <label>Discord name</label>
-    <input id="playerName">
-    <label>New score</label>
-    <input id="playerScore" type="number">
-    <button id="updateScoreBtn">Update Score</button>
-  </div>
-
-  <!-- Manage Questions -->
-  <div>
-    <h4>Manage Questions</h4>
-    <label>Question text</label>
-    <input id="newQuestion">
-    <label>Option A</label>
-    <input id="optA">
-    <label>Option B</label>
-    <input id="optB">
-    <label>Correct option index (0 or 1)</label>
-    <input id="correctOpt" type="number" min="0" max="1">
-    <button id="addQuestionBtn">Add Question</button>
-  </div>
-
-  <!-- Admin Controls -->
-  <div>
-    <button id="grantAdminBtn">Grant Admin</button>
-    <button id="removeAdminBtn">Remove Admin</button>
-  </div>
-
-  <div id="adminStatus"></div>
-</div>
-
-<script src="https://cdn.ethers.io/lib/ethers-5.7.2.min.js" type="application/javascript"></script>
-<script src="script.js"></script>
+  <!-- Main app script (loads after ethers above) -->
+  <script src="script.js"></script>
 </body>
 </html>
