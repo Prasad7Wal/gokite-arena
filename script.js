@@ -28,6 +28,9 @@ const CONTRACT_ABI = [
 ];
 // ---------------------------------------
 
+// Question versioning (increment manually when questions update)
+const questionSetId = 1; // CHANGE this number when questions update
+
 const statusText = id("statusText");
 const connectBtn = id("connectBtn");
 const joinBtn = id("joinBtn");
@@ -44,7 +47,6 @@ const submitBtn = id("submitBtn");
 const finishArea = id("finishArea");
 const leaderboardList = id("leaderboardList");
 const refreshLb = id("refreshLb");
-const adminBtn = id("adminBtn");
 const yourRankArea = id("yourRankArea");
 
 function id(x) { return document.getElementById(x); }
@@ -77,6 +79,19 @@ function pickInjectedProvider() {
   return window.ethereum;
 }
 
+// Check localStorage if user already submitted this question set
+function hasSubmittedBefore() {
+  if (!userAddress) return false;
+  const key = `submitted_${userAddress}_${questionSetId}`;
+  return localStorage.getItem(key) === "true";
+}
+
+function markSubmitted() {
+  if (!userAddress) return;
+  const key = `submitted_${userAddress}_${questionSetId}`;
+  localStorage.setItem(key, "true");
+}
+
 // ---------------- CONNECT ----------------
 async function connectWallet() {
   try {
@@ -93,15 +108,20 @@ async function connectWallet() {
     setStatus(`✅ Connected: ${shortAddr(userAddress)}`);
 
     contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-    joinBtn.disabled = false;
+
+    // Enable join if not already submitted
+    joinBtn.disabled = hasSubmittedBefore();
 
     if (injected.on) {
       injected.on("accountsChanged", (accounts) => {
         if (!accounts.length) { setStatus("Wallet locked"); joinBtn.disabled = true; }
-        else { userAddress = accounts[0]; walletInfo.innerText = `Connected: ${shortAddr(userAddress)}`; }
+        else { userAddress = accounts[0]; walletInfo.innerText = `Connected: ${shortAddr(userAddress)}`; joinBtn.disabled = hasSubmittedBefore(); }
       });
       injected.on("chainChanged", () => window.location.reload());
     }
+
+    // Load leaderboard immediately
+    await loadLeaderboard();
   } catch (err) {
     console.error("connectWallet failed:", err);
     alert("Wallet connect failed: " + (err?.message || err));
@@ -112,6 +132,10 @@ async function connectWallet() {
 // ---------------- JOIN ARENA ----------------
 async function joinArena() {
   if (!contract) { alert("Connect wallet first."); return; }
+  if (hasSubmittedBefore()) {
+    alert("You already submitted this question set. Wait for new questions.");
+    return;
+  }
 
   try {
     setStatus("⏳ Reading entry fee from contract...");
@@ -181,6 +205,7 @@ saveDiscordBtn.addEventListener("click", () => {
 // ---------------- SUBMIT SCORE ----------------
 submitBtn.addEventListener("click", async () => {
   if (!contract) { alert("Not connected to contract"); return; }
+  if (hasSubmittedBefore()) { alert("You already submitted this question set."); return; }
 
   let score = 0;
   for (let i = 0; i < questions.length; i++) {
@@ -197,6 +222,7 @@ submitBtn.addEventListener("click", async () => {
     await tx.wait();
 
     setStatus("✅ Score submitted!");
+    markSubmitted();
     await loadLeaderboard();
     quizArea.classList.add("hidden");
     finishArea.classList.add("hidden");
@@ -236,7 +262,7 @@ async function loadLeaderboard() {
     }
     yourRankArea.innerText = userRank ? `Your rank: ${userRank}` : "Your rank: Not yet submitted";
 
-    // Auto-scroll to user in leaderboard if outside top 100
+    // Auto-scroll to user if outside top 100
     if (userRank && userRank > 100) {
       const li = document.createElement("li");
       li.textContent = `${userRank}. ${userDiscord} — ${scores[userRank - 1]} pts`;
