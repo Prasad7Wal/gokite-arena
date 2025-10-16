@@ -4,7 +4,7 @@ function setStatus(msg){id("statusText").innerText = msg;}
 function shortAddr(a){return a ? a.slice(0,6) + "..." + a.slice(-4) : "";}
 
 // ---------------- CONFIG ----------------
-const CONTRACT_ADDRESS = "0x7808378770a2e486441e486aa046c715458ba337";
+const CONTRACT_ADDRESS = "0x7808378770a2e486441e486aa046c715458ba337"; // your contract
 const CONTRACT_ABI = [
   "function submitScore(uint256 score, string calldata discord) public payable",
   "function topPlayers() public view returns (string[] memory names, uint256[] memory scores)",
@@ -22,7 +22,7 @@ let questions = [
   {q:"Do players pay entry fee?",options:["Yes","No"],correct:0},
   {q:"Are top 100 shown?",options:["Yes","No"],correct:0},
   {q:"Is this UI hosted free on GitHub?",options:["Yes","No"],correct:0},
-  {q:"Can admin adjust scores?",options:["Yes","No"],correct:0},
+  {q:"You Like That Quiz?",options:["Yes","No"],correct:0},
   {q:"Is GoKite AI L1 for AI?",options:["Yes","No"],correct:0}
 ];
 let currentIndex = 0;
@@ -49,7 +49,6 @@ const yourRankArea = id("yourRankArea");
 // ---------------- LOCAL STORAGE KEYS ----------------
 function discordKey(addr){return `discord_${addr.toLowerCase()}`;}
 function submittedKey(addr){return `submitted_${addr.toLowerCase()}`;}
-function timestampKey(discord){return `timestamp_${discord}`;} // <-- per Discord
 
 // ---------------- CONNECT WALLET ----------------
 async function connectWallet(){
@@ -65,11 +64,15 @@ async function connectWallet(){
     setStatus(`✅ Connected: ${shortAddr(userAddress)}`);
     contract = new ethers.Contract(CONTRACT_ADDRESS,CONTRACT_ABI,signer);
 
+    // Load Discord from localStorage if exists
     const storedDiscord = localStorage.getItem(discordKey(userAddress));
     if(storedDiscord){userDiscord = storedDiscord;}
 
-    joinBtn.disabled = localStorage.getItem(submittedKey(userAddress))==="true";
+    // Enable join only if not submitted
+    const alreadySubmitted = localStorage.getItem(submittedKey(userAddress)) === "true";
+    joinBtn.disabled = alreadySubmitted;
 
+    // Event listeners
     if(injected.on){
       injected.on("accountsChanged",async accounts=>{
         if(!accounts.length){setStatus("Wallet locked");joinBtn.disabled=true;return;}
@@ -175,12 +178,8 @@ submitBtn.addEventListener("click",async()=>{
     const gasEstimate = await contract.estimateGas.submitScore(score,userDiscord,{value:entryFee}).catch(()=>300000);
     const tx = await contract.submitScore(score,userDiscord,{value:entryFee,gasLimit:gasEstimate});
     await tx.wait();
-
-    // Save submission locally with timestamp PER DISCORD
-    localStorage.setItem(submittedKey(userAddress),"true");
-    localStorage.setItem(timestampKey(userDiscord), Date.now());
-
     setStatus("✅ Score submitted!");
+    localStorage.setItem(submittedKey(userAddress),"true");
     await loadLeaderboard();
     quizArea.classList.add("hidden");
     finishArea.classList.add("hidden");
@@ -198,34 +197,30 @@ async function loadLeaderboard(){
   setStatus("⏳ Loading leaderboard...");
   try{
     const [names,scores] = await contract.topPlayers();
-
-    // Build array with timestamps PER DISCORD
-    let playersArr = names.map((name,i)=>({
-      name,
-      score: scores[i],
-      timestamp: parseInt(localStorage.getItem(timestampKey(name))) || 0
-    }));
-
-    // Sort by score descending; tie-breaker: earlier submission first
-    playersArr.sort((a,b)=>{
-      if(b.score !== a.score) return b.score - a.score;
-      return a.timestamp - b.timestamp;
-    });
-
     leaderboardList.innerHTML="";
-    playersArr.forEach((p,i)=>{
+    for(let i=0;i<Math.min(names.length,100);i++){
       const li=document.createElement("li");
-      li.textContent=`${i+1}. ${p.name} — ${p.score} pts`;
-      if(p.name===userDiscord) li.style.fontWeight="700";
+      li.textContent=`${i+1}. ${names[i]} — ${scores[i]} pts`;
+      if(names[i]===userDiscord)li.style.fontWeight="700";
       leaderboardList.appendChild(li);
-    });
-
+    }
+    // Compute user's rank
     let userRank=null;
-    for(let i=0;i<playersArr.length;i++){
-      if(playersArr[i].name===userDiscord){userRank=i+1;break;}
+    if(userDiscord){
+      for(let i=0;i<names.length;i++){
+        if(names[i]===userDiscord){userRank=i+1;break;}
+      }
     }
     yourRankArea.innerText=userRank?`Your rank: ${userRank}`:"Your rank: Not yet submitted";
-
+    // If user outside top 100
+    if(userRank && userRank>100){
+      const li=document.createElement("li");
+      li.textContent=`${userRank}. ${userDiscord} — ${scores[userRank-1]} pts`;
+      li.style.fontWeight="700";
+      li.style.background="#f0e3d9";
+      leaderboardList.appendChild(li);
+      li.scrollIntoView({behavior:"smooth"});
+    }
     setStatus("✅ Leaderboard loaded");
   }catch(e){
     console.error("loadLeaderboard error:",e);
