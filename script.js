@@ -21,7 +21,7 @@ let questions = [
   {q:"Is this built on GoKite testnet?",options:["Yes","No"],correct:0},
   {q:"Do players pay entry fee?",options:["Yes","No"],correct:0},
   {q:"Are top 100 shown?",options:["Yes","No"],correct:0},
-  {q:"Is this UI hosted free on GitHub?",options:["Yes","No"],correct:0},
+  {q:"Is this website hosted free on GitHub?",options:["Yes","No"],correct:0},
   {q:"You Like That Quiz?",options:["Yes","No"],correct:0},
   {q:"Is GoKite AI L1 for AI?",options:["Yes","No"],correct:0}
 ];
