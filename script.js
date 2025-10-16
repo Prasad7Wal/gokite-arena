@@ -49,7 +49,7 @@ const yourRankArea = id("yourRankArea");
 // ---------------- LOCAL STORAGE KEYS ----------------
 function discordKey(addr){return `discord_${addr.toLowerCase()}`;}
 function submittedKey(addr){return `submitted_${addr.toLowerCase()}`;}
-function timestampKey(addr){return `timestamp_${addr.toLowerCase()}`;}
+function timestampKey(discord){return `timestamp_${discord}`;} // <-- per Discord
 
 // ---------------- CONNECT WALLET ----------------
 async function connectWallet(){
@@ -176,9 +176,9 @@ submitBtn.addEventListener("click",async()=>{
     const tx = await contract.submitScore(score,userDiscord,{value:entryFee,gasLimit:gasEstimate});
     await tx.wait();
 
-    // Save submission locally with timestamp
+    // Save submission locally with timestamp PER DISCORD
     localStorage.setItem(submittedKey(userAddress),"true");
-    localStorage.setItem(timestampKey(userAddress),Date.now());
+    localStorage.setItem(timestampKey(userDiscord), Date.now());
 
     setStatus("✅ Score submitted!");
     await loadLeaderboard();
@@ -199,15 +199,18 @@ async function loadLeaderboard(){
   try{
     const [names,scores] = await contract.topPlayers();
 
-    // Build array with timestamps
+    // Build array with timestamps PER DISCORD
     let playersArr = names.map((name,i)=>({
       name,
-      score:scores[i],
-      timestamp: localStorage.getItem(timestampKey(userAddress)) || 0
+      score: scores[i],
+      timestamp: parseInt(localStorage.getItem(timestampKey(name))) || 0
     }));
 
-    // Sort by timestamp first (earlier submissions first), then by score
-    playersArr.sort((a,b)=> a.timestamp - b.timestamp || b.score - a.score);
+    // Sort by score descending; tie-breaker: earlier submission first
+    playersArr.sort((a,b)=>{
+      if(b.score !== a.score) return b.score - a.score;
+      return a.timestamp - b.timestamp;
+    });
 
     leaderboardList.innerHTML="";
     playersArr.forEach((p,i)=>{
@@ -217,7 +220,6 @@ async function loadLeaderboard(){
       leaderboardList.appendChild(li);
     });
 
-    // Compute user rank
     let userRank=null;
     for(let i=0;i<playersArr.length;i++){
       if(playersArr[i].name===userDiscord){userRank=i+1;break;}
