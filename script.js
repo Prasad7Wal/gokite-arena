@@ -197,36 +197,61 @@ async function loadLeaderboard(){
   setStatus("⏳ Loading leaderboard...");
   try{
     const [names,scores] = await contract.topPlayers();
-    leaderboardList.innerHTML="";
-    for(let i=0;i<Math.min(names.length,100);i++){
-      const li=document.createElement("li");
-      li.textContent=`${i+1}. ${names[i]} — ${scores[i]} pts`;
-      if(names[i]===userDiscord)li.style.fontWeight="700";
+    const playersData = [];
+
+    // Build array with block numbers
+    for(let i=0;i<names.length;i++){
+      const addr = leaderboardAddrs[i]; // we need addresses
+      // fetch full player info from contract
+      const playerInfo = await contract.getPlayer(addr);
+      const blockNumber = playerInfo[2]; // lastUpdatedBlock
+      playersData.push({
+        name: names[i],
+        score: scores[i],
+        block: blockNumber
+      });
+    }
+
+    // Sort: score descending, then block ascending
+    playersData.sort((a,b)=>{
+      if(b.score !== a.score) return b.score - a.score;    // higher score first
+      return a.block - b.block;                            // earlier submission first
+    });
+
+    // Render leaderboard
+    leaderboardList.innerHTML = "";
+    for(let i=0;i<Math.min(playersData.length,100);i++){
+      const li = document.createElement("li");
+      li.textContent = `${i+1}. ${playersData[i].name} — ${playersData[i].score} pts`;
+      if(playersData[i].name===userDiscord) li.style.fontWeight="700";
       leaderboardList.appendChild(li);
     }
+
     // Compute user's rank
-    let userRank=null;
-    if(userDiscord){
-      for(let i=0;i<names.length;i++){
-        if(names[i]===userDiscord){userRank=i+1;break;}
-      }
+    let userRank = null;
+    for(let i=0;i<playersData.length;i++){
+      if(playersData[i].name===userDiscord){userRank=i+1;break;}
     }
-    yourRankArea.innerText=userRank?`Your rank: ${userRank}`:"Your rank: Not yet submitted";
+    yourRankArea.innerText = userRank ? `Your rank: ${userRank}` : "Your rank: Not yet submitted";
+
     // If user outside top 100
     if(userRank && userRank>100){
       const li=document.createElement("li");
-      li.textContent=`${userRank}. ${userDiscord} — ${scores[userRank-1]} pts`;
+      const userData = playersData.find(p=>p.name===userDiscord);
+      li.textContent=`${userRank}. ${userData.name} — ${userData.score} pts`;
       li.style.fontWeight="700";
       li.style.background="#f0e3d9";
       leaderboardList.appendChild(li);
       li.scrollIntoView({behavior:"smooth"});
     }
+
     setStatus("✅ Leaderboard loaded");
   }catch(e){
     console.error("loadLeaderboard error:",e);
     setStatus("Failed loading leaderboard");
   }
 }
+
 
 // ---------------- INIT ----------------
 (async function init(){
