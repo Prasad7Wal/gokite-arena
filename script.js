@@ -4,7 +4,7 @@ function setStatus(msg){id("statusText").innerText = msg;}
 function shortAddr(a){return a ? a.slice(0,6) + "..." + a.slice(-4) : "";}
 
 // ---------------- CONFIG ----------------
-const CONTRACT_ADDRESS = "0x7808378770a2e486441e486aa046c715458ba337"; // your contract
+const CONTRACT_ADDRESS = "0x7808378770a2e486441e486aa046c715458ba337";
 const CONTRACT_ABI = [
   "function submitScore(uint256 score, string calldata discord) public payable",
   "function topPlayers() public view returns (string[] memory names, uint256[] memory scores)",
@@ -49,6 +49,7 @@ const yourRankArea = id("yourRankArea");
 // ---------------- LOCAL STORAGE KEYS ----------------
 function discordKey(addr){return `discord_${addr.toLowerCase()}`;}
 function submittedKey(addr){return `submitted_${addr.toLowerCase()}`;}
+function timestampKey(addr){return `timestamp_${addr.toLowerCase()}`;}
 
 // ---------------- CONNECT WALLET ----------------
 async function connectWallet(){
@@ -64,15 +65,11 @@ async function connectWallet(){
     setStatus(`✅ Connected: ${shortAddr(userAddress)}`);
     contract = new ethers.Contract(CONTRACT_ADDRESS,CONTRACT_ABI,signer);
 
-    // Load Discord from localStorage if exists
     const storedDiscord = localStorage.getItem(discordKey(userAddress));
     if(storedDiscord){userDiscord = storedDiscord;}
 
-    // Enable join only if not submitted
-    const alreadySubmitted = localStorage.getItem(submittedKey(userAddress)) === "true";
-    joinBtn.disabled = alreadySubmitted;
+    joinBtn.disabled = localStorage.getItem(submittedKey(userAddress))==="true";
 
-    // Event listeners
     if(injected.on){
       injected.on("accountsChanged",async accounts=>{
         if(!accounts.length){setStatus("Wallet locked");joinBtn.disabled=true;return;}
@@ -178,8 +175,12 @@ submitBtn.addEventListener("click",async()=>{
     const gasEstimate = await contract.estimateGas.submitScore(score,userDiscord,{value:entryFee}).catch(()=>300000);
     const tx = await contract.submitScore(score,userDiscord,{value:entryFee,gasLimit:gasEstimate});
     await tx.wait();
-    setStatus("✅ Score submitted!");
+
+    // Save submission locally with timestamp
     localStorage.setItem(submittedKey(userAddress),"true");
+    localStorage.setItem(timestampKey(userAddress),Date.now());
+
+    setStatus("✅ Score submitted!");
     await loadLeaderboard();
     quizArea.classList.add("hidden");
     finishArea.classList.add("hidden");
@@ -197,21 +198,16 @@ async function loadLeaderboard(){
   setStatus("⏳ Loading leaderboard...");
   try{
     const [names,scores] = await contract.topPlayers();
-    
-    // Fetch lastUpdatedBlock for each player
-    const lastBlocks = await Promise.all(
-      names.map((_,i) => contract.getPlayer(leaderboardAddrs[i]).then(p => p.lastUpdatedBlock))
-    );
 
-    // Create array of player objects
+    // Build array with timestamps
     let playersArr = names.map((name,i)=>({
       name,
       score:scores[i],
-      block:lastBlocks[i]
+      timestamp: localStorage.getItem(timestampKey(userAddress)) || 0
     }));
 
-    // Sort by first submission (lowest block first)
-    playersArr.sort((a,b)=>a.block - b.block);
+    // Sort by timestamp first (earlier submissions first), then by score
+    playersArr.sort((a,b)=> a.timestamp - b.timestamp || b.score - a.score);
 
     leaderboardList.innerHTML="";
     playersArr.forEach((p,i)=>{
@@ -221,7 +217,7 @@ async function loadLeaderboard(){
       leaderboardList.appendChild(li);
     });
 
-    // Your rank
+    // Compute user rank
     let userRank=null;
     for(let i=0;i<playersArr.length;i++){
       if(playersArr[i].name===userDiscord){userRank=i+1;break;}
@@ -234,7 +230,6 @@ async function loadLeaderboard(){
     setStatus("Failed loading leaderboard");
   }
 }
-
 
 // ---------------- INIT ----------------
 (async function init(){
