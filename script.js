@@ -8,7 +8,9 @@ const CONTRACT_ADDRESS = "0x7808378770a2e486441e486aa046c715458ba337"; // your c
 const CONTRACT_ABI = [
   "function submitScore(uint256 score, string calldata discord) public payable",
   "function topPlayers() public view returns (string[] memory names, uint256[] memory scores)",
-  "function entryFee() public view returns (uint256)"
+  "function entryFee() public view returns (uint256)",
+  "function getPlayer(address addr) public view returns (string memory name, uint256 score, uint256 lastUpdatedBlock)",
+  "function playerAddresses() public view returns (address[] memory)"
 ];
 
 let provider, signer, contract;
@@ -196,29 +198,27 @@ async function loadLeaderboard(){
   if(!contract){setStatus("Contract not initialized");return;}
   setStatus("⏳ Loading leaderboard...");
   try{
-    const [names,scores] = await contract.topPlayers();
+    // Fetch all player addresses
+    const addresses = await contract.playerAddresses();
     const playersData = [];
 
-    // Build array with block numbers
-    for(let i=0;i<names.length;i++){
-      const addr = leaderboardAddrs[i]; // we need addresses
-      // fetch full player info from contract
-      const playerInfo = await contract.getPlayer(addr);
-      const blockNumber = playerInfo[2]; // lastUpdatedBlock
+    for(let i=0;i<addresses.length;i++){
+      const addr = addresses[i];
+      const info = await contract.getPlayer(addr); // [name, score, lastUpdatedBlock]
       playersData.push({
-        name: names[i],
-        score: scores[i],
-        block: blockNumber
+        name: info[0],
+        score: parseInt(info[1]),
+        block: parseInt(info[2])
       });
     }
 
-    // Sort: score descending, then block ascending
+    // Sort by score descending, then block ascending (first-come-first-serve)
     playersData.sort((a,b)=>{
-      if(b.score !== a.score) return b.score - a.score;    // higher score first
-      return a.block - b.block;                            // earlier submission first
+      if(b.score !== a.score) return b.score - a.score;
+      return a.block - b.block;
     });
 
-    // Render leaderboard
+    // Render leaderboard top 100
     leaderboardList.innerHTML = "";
     for(let i=0;i<Math.min(playersData.length,100);i++){
       const li = document.createElement("li");
@@ -227,18 +227,18 @@ async function loadLeaderboard(){
       leaderboardList.appendChild(li);
     }
 
-    // Compute user's rank
+    // User rank
     let userRank = null;
     for(let i=0;i<playersData.length;i++){
       if(playersData[i].name===userDiscord){userRank=i+1;break;}
     }
     yourRankArea.innerText = userRank ? `Your rank: ${userRank}` : "Your rank: Not yet submitted";
 
-    // If user outside top 100
+    // Show user if outside top 100
     if(userRank && userRank>100){
-      const li=document.createElement("li");
+      const li = document.createElement("li");
       const userData = playersData.find(p=>p.name===userDiscord);
-      li.textContent=`${userRank}. ${userData.name} — ${userData.score} pts`;
+      li.textContent = `${userRank}. ${userData.name} — ${userData.score} pts`;
       li.style.fontWeight="700";
       li.style.background="#f0e3d9";
       leaderboardList.appendChild(li);
@@ -251,7 +251,6 @@ async function loadLeaderboard(){
     setStatus("Failed loading leaderboard");
   }
 }
-
 
 // ---------------- INIT ----------------
 (async function init(){
